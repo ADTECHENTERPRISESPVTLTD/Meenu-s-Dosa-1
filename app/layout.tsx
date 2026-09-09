@@ -1,11 +1,18 @@
 import { Analytics } from '@vercel/analytics/next'
 import type { Metadata, Viewport } from 'next'
 import './globals.css'
+import { ThemeProvider } from '@/components/theme-provider'
 
 export const metadata: Metadata = {
-  title: 'v0 App',
-  description: 'Created with v0',
+  title: "Meenu's Dosa | South Indian comfort, served with soul",
+  description: "Explore the Meenu's Dosa menu, book a table, find a location, and order online.",
   generator: 'v0.app',
+  keywords: ['Meenu’s Dosa', 'South Indian restaurant', 'dosa', 'idli', 'restaurant'],
+  openGraph: {
+    title: "Meenu's Dosa | South Indian comfort",
+    description: 'Crisp dosas, homestyle rice and warm hospitality.',
+    type: 'website',
+  },
   icons: {
     icon: [
       {
@@ -41,7 +48,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className="antialiased">
-        {children}
+        <ThemeProvider>{children}</ThemeProvider>
         {process.env.NODE_ENV === 'production' && <Analytics />}
       </body>
     </html>
