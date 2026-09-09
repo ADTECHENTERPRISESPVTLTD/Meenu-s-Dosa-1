@@ -6,7 +6,13 @@ export const siteConfig = {
   tagline: 'South Indian comfort, made with care.',
   description: 'A warm, modern South Indian restaurant experience.',
   apiUrl: process.env.NEXT_PUBLIC_API_URL || '',
-  integrations: { whatsapp: '', zomato: '', swiggy: '', trilio: '', instagram: '' },
+  integrations: {
+    whatsapp: '',
+    zomato: 'https://www.zomato.com/ncr/meenu-s-dosa',
+    swiggy: 'https://www.swiggy.com/search?q=meenu%20dosa',
+    trilio: '',
+    instagram: '',
+  },
 }
 
 export const categories: Category[] = [
