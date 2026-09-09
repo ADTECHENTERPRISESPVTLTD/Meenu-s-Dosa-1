@@ -3,16 +3,19 @@
 import { useMemo, useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { LogOut, Pencil, Plus, Trash2, X } from 'lucide-react'
-import { menu as initialMenu, categories, formatPrice, type MenuItem } from '@/lib/data'
+import { LogOut, Pencil, Plus, Trash2, X, Calendar, MapPin, Globe } from 'lucide-react'
+import { menu as initialMenu, categories, formatPrice, siteConfig, type MenuItem } from '@/lib/data'
 import { Shell } from '@/components/site-shell'
 
 const ADMIN_EMAIL = 'admin@meenusdosa.com'
 const ADMIN_PASSWORD = 'admin123'
 const SESSION_KEY = 'meenu-dosa-admin-session'
 const ORDER_HISTORY_KEY = 'meenu-dosa-orders'
+const BOOKINGS_KEY = 'meenu-dosa-bookings'
+const LOCATIONS_KEY = 'meenu-dosa-locations'
+const CONTENT_KEY = 'meenu-dosa-content'
 
-type Tab = 'dashboard' | 'orders' | 'menu' | 'settings'
+type Tab = 'dashboard' | 'orders' | 'bookings' | 'menu' | 'locations' | 'content' | 'settings'
 type OrderStatus = 'pending' | 'confirmed' | 'preparing' | 'ready' | 'delivered' | 'cancelled'
 type PaymentMethod = 'qr' | 'cash' | 'zomato' | 'swiggy'
 
@@ -58,6 +61,10 @@ export default function AdminDashboard() {
   const [statusFilter, setStatusFilter] = useState<'all' | OrderStatus>('all')
   const [paymentFilter, setPaymentFilter] = useState<'all' | 'paid' | 'unpaid'>('all')
   const [menuCategoryFilter, setMenuCategoryFilter] = useState<string>('all')
+  const [bookings, setBookings] = useState<any[]>([])
+  const [locations, setLocations] = useState<any[]>([])
+  const [content, setContent] = useState({ name: siteConfig.name, tagline: siteConfig.tagline, description: siteConfig.description, phone: '', whatsapp: '', instagram: '', zomato: siteConfig.integrations.zomato, swiggy: siteConfig.integrations.swiggy })
+  const [contentSaving, setContentSaving] = useState(false)
 
   useEffect(() => {
     try {
@@ -72,6 +79,20 @@ export default function AdminDashboard() {
     try {
       const stored = localStorage.getItem(ORDER_HISTORY_KEY)
       if (stored) setOrders(JSON.parse(stored))
+    } catch {}
+  }, [])
+
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem(BOOKINGS_KEY)
+      if (stored) setBookings(JSON.parse(stored))
+    } catch {}
+  }, [])
+
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem(LOCATIONS_KEY)
+      if (stored) setLocations(JSON.parse(stored))
     } catch {}
   }, [])
 
@@ -119,6 +140,65 @@ export default function AdminDashboard() {
 
   const deleteItem = (item: MenuItem) => {
     if (window.confirm(`Delete ${item.name}?`)) setMenuItems((current) => current.filter((entry) => entry.id !== item.id))
+  }
+
+  const updateBookingStatus = (bookingId: string, status: string) => {
+    setBookings((current) => current.map((booking) => booking.id === bookingId ? { ...booking, status } : booking))
+    try { localStorage.setItem(BOOKINGS_KEY, JSON.stringify(bookings.map((booking) => booking.id === bookingId ? { ...booking, status } : booking))) } catch {}
+  }
+
+  const deleteBooking = (bookingId: string) => {
+    if (window.confirm('Delete this booking?')) {
+      setBookings((current) => current.filter((booking) => booking.id !== bookingId))
+      try { localStorage.setItem(BOOKINGS_KEY, JSON.stringify(bookings.filter((booking) => booking.id !== bookingId))) } catch {}
+    }
+  }
+
+  const saveLocation = (event: React.FormEvent) => {
+    event.preventDefault()
+    const name = (event.target as any).name.value.trim()
+    const address = (event.target as any).address.value.trim()
+    const phone = (event.target as any).phone.value.trim()
+    const hours = (event.target as any).hours.value.trim()
+    const mapsUrl = (event.target as any).mapsUrl.value.trim()
+    if (!name || !address) return
+    const entry = { id: `loc-${Date.now()}`, name, address, phone, hours, mapsUrl }
+    setLocations((current) => [...current, entry])
+    try { localStorage.setItem(LOCATIONS_KEY, JSON.stringify([...locations, entry])) } catch {}
+    ;(event.target as HTMLFormElement).reset()
+  }
+
+  const deleteLocation = (locationId: string) => {
+    if (window.confirm('Delete this location?')) {
+      setLocations((current) => current.filter((loc) => loc.id !== locationId))
+      try { localStorage.setItem(LOCATIONS_KEY, JSON.stringify(locations.filter((loc) => loc.id !== locationId))) } catch {}
+    }
+  }
+
+  const saveContent = async (event: React.FormEvent) => {
+    event.preventDefault()
+    setContentSaving(true)
+    try {
+      const formData = new FormData(event.target as HTMLFormElement)
+      const updated = {
+        ...content,
+        name: formData.get('name') as string,
+        tagline: formData.get('tagline') as string,
+        description: formData.get('description') as string,
+        phone: formData.get('phone') as string,
+        whatsapp: formData.get('whatsapp') as string,
+        instagram: formData.get('instagram') as string,
+        zomato: formData.get('zomato') as string,
+        swiggy: formData.get('swiggy') as string,
+      }
+      setContent(updated)
+      try { localStorage.setItem(CONTENT_KEY, JSON.stringify(updated)) } catch {}
+      alert('Content saved successfully')
+    } catch {
+      alert('Failed to save content')
+    } finally {
+      setContentSaving(false)
+    }
   }
 
   const filteredOrders = useMemo(() => {
@@ -201,7 +281,10 @@ export default function AdminDashboard() {
             {([
               ['dashboard', 'Dashboard'],
               ['orders', 'Orders'],
+              ['bookings', 'Bookings'],
               ['menu', 'Menu'],
+              ['locations', 'Locations'],
+              ['content', 'Content'],
               ['settings', 'Settings'],
             ] as const).map(([key, label]) => (
               <button
@@ -381,6 +464,116 @@ export default function AdminDashboard() {
                   <p className="text-xs text-muted-foreground">Type: South Indian restaurant</p>
                 </div>
               </div>
+            </section>
+          )}
+
+          {tab === 'bookings' && (
+            <section className="mt-8 rounded-3xl border bg-card p-5 sm:p-8">
+              <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
+                <div>
+                  <h2 className="text-2xl font-black">Booking management</h2>
+                  <p className="mt-1 text-sm text-muted-foreground">View and manage table reservations.</p>
+                </div>
+              </div>
+              {bookings.length === 0 ? (
+                <p className="mt-6 text-sm text-muted-foreground">No bookings yet.</p>
+              ) : (
+                <div className="mt-6 overflow-x-auto">
+                  <table className="w-full min-w-[700px] text-left text-sm">
+                    <thead className="border-b text-muted-foreground">
+                      <tr>
+                        <th className="pb-3">ID</th>
+                        <th className="pb-3">Name</th>
+                        <th className="pb-3">Phone</th>
+                        <th className="pb-3">Date</th>
+                        <th className="pb-3">Time</th>
+                        <th className="pb-3">Guests</th>
+                        <th className="pb-3">Status</th>
+                        <th className="pb-3">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {bookings.map((booking) => (
+                        <tr key={booking.id} className="border-b last:border-0">
+                          <td className="py-4 font-semibold">#{booking.id}</td>
+                          <td className="py-4">{booking.name}</td>
+                          <td className="py-4 text-muted-foreground">{booking.phone}</td>
+                          <td className="py-4">{booking.date}</td>
+                          <td className="py-4">{booking.time}</td>
+                          <td className="py-4">{booking.guests}</td>
+                          <td className="py-4">
+                            <select value={booking.status || 'pending'} onChange={(e) => updateBookingStatus(booking.id, e.target.value)} className={`rounded-full px-3 py-1 text-xs font-bold ${booking.status === 'confirmed' ? 'bg-green-500/15 text-green-700' : booking.status === 'cancelled' ? 'bg-destructive/15 text-destructive' : 'bg-yellow-500/15 text-yellow-700'}`}>
+                              <option value="pending">Pending</option>
+                              <option value="confirmed">Confirmed</option>
+                              <option value="cancelled">Cancelled</option>
+                            </select>
+                          </td>
+                          <td className="py-4">
+                            <button onClick={() => deleteBooking(booking.id)} className="rounded-lg border p-2 text-destructive"><Trash2 size={15}/></button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </section>
+          )}
+
+          {tab === 'locations' && (
+            <section className="mt-8 rounded-3xl border bg-card p-5 sm:p-8">
+              <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
+                <div>
+                  <h2 className="text-2xl font-black">Location management</h2>
+                  <p className="mt-1 text-sm text-muted-foreground">Add and manage restaurant locations.</p>
+                </div>
+              </div>
+              <form onSubmit={saveLocation} className="mt-6 grid gap-3 rounded-2xl border bg-muted/30 p-4 sm:grid-cols-2">
+                <input required name="name" placeholder="Location name" className="h-11 rounded-xl border bg-background px-3"/>
+                <input required name="address" placeholder="Address" className="h-11 rounded-xl border bg-background px-3"/>
+                <input name="phone" placeholder="Phone" className="h-11 rounded-xl border bg-background px-3"/>
+                <input name="hours" placeholder="Opening hours" className="h-11 rounded-xl border bg-background px-3"/>
+                <input name="mapsUrl" placeholder="Google Maps URL" className="h-11 rounded-xl border bg-background px-3 sm:col-span-2"/>
+                <button type="submit" className="rounded-xl bg-primary px-4 py-2 text-sm font-bold text-primary-foreground">Add location</button>
+              </form>
+              <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                {locations.map((loc) => (
+                  <div key={loc.id} className="rounded-2xl border bg-background p-4">
+                    <div className="flex items-start justify-between">
+                      <div>
+                        <p className="font-bold">{loc.name}</p>
+                        <p className="mt-1 text-xs text-muted-foreground">{loc.address}</p>
+                        <p className="mt-1 text-xs text-muted-foreground">{loc.phone}</p>
+                        <p className="mt-1 text-xs text-muted-foreground">{loc.hours}</p>
+                      </div>
+                      <button onClick={() => deleteLocation(loc.id)} className="rounded-lg border p-2 text-destructive"><Trash2 size={15}/></button>
+                    </div>
+                    {loc.mapsUrl && <a href={loc.mapsUrl} target="_blank" rel="noreferrer noopener" className="mt-2 inline-flex items-center gap-1 text-xs font-bold text-primary">Open map <MapPin size={14}/></a>}
+                  </div>
+                ))}
+              </div>
+            </section>
+          )}
+
+          {tab === 'content' && (
+            <section className="mt-8 rounded-3xl border bg-card p-5 sm:p-8">
+              <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
+                <div>
+                  <h2 className="text-2xl font-black">Content management</h2>
+                  <p className="mt-1 text-sm text-muted-foreground">Update website content and social links.</p>
+                </div>
+              </div>
+              <form onSubmit={saveContent} className="mt-6 grid gap-4 rounded-2xl border bg-muted/30 p-4 sm:grid-cols-2">
+                <label className="grid gap-2 text-sm font-semibold sm:col-span-2">Restaurant name<input name="name" defaultValue={content.name} className="h-11 rounded-xl border bg-background px-3"/></label>
+                <label className="grid gap-2 text-sm font-semibold sm:col-span-2">Tagline<input name="tagline" defaultValue={content.tagline} className="h-11 rounded-xl border bg-background px-3"/></label>
+                <label className="grid gap-2 text-sm font-semibold sm:col-span-2">Description<textarea name="description" defaultValue={content.description} rows={3} className="rounded-xl border bg-background p-3"/></label>
+                <label className="grid gap-2 text-sm font-semibold">Phone<input name="phone" defaultValue={content.phone} className="h-11 rounded-xl border bg-background px-3"/></label>
+                <label className="grid gap-2 text-sm font-semibold">WhatsApp<input name="whatsapp" defaultValue={content.whatsapp} className="h-11 rounded-xl border bg-background px-3"/></label>
+                <label className="grid gap-2 text-sm font-semibold">Instagram<input name="instagram" defaultValue={content.instagram} className="h-11 rounded-xl border bg-background px-3"/></label>
+                <label className="grid gap-2 text-sm font-semibold">Zomato URL<input name="zomato" defaultValue={content.zomato} className="h-11 rounded-xl border bg-background px-3"/></label>
+                <label className="grid gap-2 text-sm font-semibold">Swiggy URL<input name="swiggy" defaultValue={content.swiggy} className="h-11 rounded-xl border bg-background px-3"/></label>
+                <button type="submit" disabled={contentSaving} className="rounded-xl bg-primary px-4 py-2 text-sm font-bold text-primary-foreground disabled:opacity-60 sm:col-span-2">{contentSaving ? 'Saving...' : 'Save content'}</button>
+              </form>
             </section>
           )}
         </div>
