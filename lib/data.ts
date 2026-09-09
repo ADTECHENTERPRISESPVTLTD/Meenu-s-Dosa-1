@@ -24,7 +24,10 @@ const rows: [string, string, number][] = [
 ['Button Idli Fry','idli-vada-upma',163],['Ghee Podi Thaat Idli','idli-vada-upma',199],['Ghee Veggie Rawa Upma','idli-vada-upma',221],['Idli Sambar','idli-vada-upma',149],['Idli Vada Sambar','idli-vada-upma',159],['Molapodi Idli','idli-vada-upma',163],['Vada Sambar','idli-vada-upma',166],['Veggie Rawa Upma','idli-vada-upma',199],['Rasam Idli','idli-vada-upma',162],
 ['Curd Rice','rice',249],['Lemon Rice','rice',229],['Rasam Rice','rice',229],['Sambar Rice','rice',229],['Tamarind Rice','rice',229],['Tomato Rice','rice',229],
 ['Cheese Uttapam','uttapam',289],['Onion Uttapam','uttapam',221],['Paneer Uttapam','uttapam',279],['Regular Uttapam','uttapam',225],['Tomato Uttapam','uttapam',225],['Mixed Vegetable Uttapam','uttapam',230],
-['Idiyappam','exclusives',211],['Idiyappam With Coconut Milk','exclusives',254],['Paysam','desserts',134],['Dadi Ka Halwa','desserts',162],['Kesari Halwa','desserts',119],['Pinapple Sheera','desserts',128],['Butterscotch Shake','beverages',229],['Monin Chocolate Shake','beverages',264],['Davidoff Cold Coffee','beverages',190],['Oreo Shake','beverages',209],['Swadeshi Buttermilk','beverages',99],['Hazelnut Cold Coffee','beverages',219],['Vanilla Shake','beverages',199],['Sangam Lassi','beverages',149],['Lemon Iced Tea','mocktails',149],
+['Idiyappam','exclusives',211],['Idiyappam With Coconut Milk','exclusives',254],
+['Paysam','desserts',134],['Dadi Ka Halwa','desserts',162],['Kesari Halwa','desserts',119],['Pinapple Sheera','desserts',128],
+['Butterscotch Shake','beverages',229],['Monin Chocolate Shake','beverages',264],['Davidoff Cold Coffee','beverages',190],['Oreo Shake','beverages',209],['Swadeshi Buttermilk','beverages',99],['Hazelnut Cold Coffee','beverages',219],['Vanilla Shake','beverages',199],['Sangam Lassi','beverages',149],
+['Lemon Iced Tea','mocktails',149],
 ]
 export const menu: MenuItem[] = rows.map(([name, category, price], index) => ({ id: `${category}-${index}`, name, category, price, available: true, vegetarian: true, image: categories.find(c => c.id === category)?.image || 'dosa.jpg' }))
 

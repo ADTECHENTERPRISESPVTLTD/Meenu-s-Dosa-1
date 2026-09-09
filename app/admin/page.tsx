@@ -57,6 +57,7 @@ export default function AdminDashboard() {
   const [orderFilter, setOrderFilter] = useState<'all' | 'direct' | 'zomato' | 'swiggy'>('all')
   const [statusFilter, setStatusFilter] = useState<'all' | OrderStatus>('all')
   const [paymentFilter, setPaymentFilter] = useState<'all' | 'paid' | 'unpaid'>('all')
+  const [menuCategoryFilter, setMenuCategoryFilter] = useState<string>('all')
 
   useEffect(() => {
     try {
@@ -321,6 +322,12 @@ export default function AdminDashboard() {
                   <button type="button" onClick={() => setShowForm(false)} className="rounded-xl border p-2"><X size={18}/></button>
                 </form>
               )}
+              <div className="mt-4 flex flex-wrap gap-2">
+                <select value={menuCategoryFilter} onChange={(e) => setMenuCategoryFilter(e.target.value)} className="h-10 rounded-full border bg-background px-3 text-sm font-semibold">
+                  <option value="all">All categories</option>
+                  {categories.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
+                </select>
+              </div>
               <div className="mt-6 overflow-x-auto">
                 <table className="w-full min-w-[700px] text-left text-sm">
                   <thead className="border-b text-muted-foreground">
@@ -333,7 +340,7 @@ export default function AdminDashboard() {
                     </tr>
                   </thead>
                   <tbody>
-                    {menuItems.slice(0, 12).map((item) => (
+                    {menuItems.filter((item) => menuCategoryFilter === 'all' || item.category === menuCategoryFilter).slice(0, 12).map((item) => (
                       <tr key={item.id} className="border-b last:border-0">
                         <td className="py-4 font-semibold">{item.name}</td>
                         <td className="py-4 text-muted-foreground">{item.category}</td>
