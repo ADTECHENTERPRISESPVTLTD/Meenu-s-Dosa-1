@@ -3,15 +3,15 @@ export type Category = { id: string; name: string; image: string; description: s
 
 export const siteConfig = {
   name: "Meenu's Dosa",
-  tagline: 'South Indian comfort, made with care.',
-  description: 'A warm, modern South Indian restaurant experience.',
+  tagline: '40-year heritage of crafting crispy dosas and soda-free fluffy idlis.',
+  description: 'Authentic South Indian cuisine. Vegetarian. Indoor seating. Home delivery. Takeaway. Lunch & Dinner. Digital payments.',
   apiUrl: process.env.NEXT_PUBLIC_API_URL || '',
   integrations: {
-    whatsapp: '',
-    zomato: 'https://www.zomato.com/ncr/meenu-s-dosa',
-    swiggy: 'https://www.swiggy.com/search?q=meenu%20dosa',
+    whatsapp: 'https://linktr.ee/meenusdosa',
+    zomato: 'https://www.zomato.com/bhopal/meenus-dosa-ayodhya-bypass/',
+    swiggy: 'https://www.swiggy.com/city/bhopal/meenus-dosa-minal-minaal-residency-piplani-rest995939',
     trilio: '',
-    instagram: '',
+    instagram: 'https://instagram.com/meenusdosa',
   },
 }
 
@@ -31,7 +31,28 @@ const rows: [string, string, number][] = [
 ]
 export const menu: MenuItem[] = rows.map(([name, category, price], index) => ({ id: `${category}-${index}`, name, category, price, available: true, vegetarian: true, image: categories.find(c => c.id === category)?.image || 'dosa.jpg' }))
 
-export const locations = [{ id: 'location-1', name: "Meenu's Dosa location", address: 'Verified address to be added', phone: 'Verified phone to be added', hours: 'Opening hours to be added', mapsUrl: '' }]
+export const locations = [
+  {
+    id: 'location-minal',
+    name: "Meenu's Dosa — Minal Residency",
+    address: 'Shop No. 21 & 22, Ground Floor, Raj Capital, Minaal Residency, J.K. Road, Ayodhya Bypass, Bhopal, Madhya Pradesh – 462023',
+    phone: '+91 6262 9555 05',
+    hours: '8:00 AM – 10:30 PM',
+    mapsUrl: 'https://www.google.com/maps/place/Meenu%27s+Dosa+-+Minal+Residency',
+    zomatoUrl: 'https://www.zomato.com/bhopal/meenus-dosa-ayodhya-bypass/',
+    swiggyUrl: 'https://www.swiggy.com/city/bhopal/meenus-dosa-minal-minaal-residency-piplani-rest995939',
+  },
+  {
+    id: 'location-mpnagar',
+    name: "Meenu's Dosa — MP Nagar",
+    address: 'Shop No. 1, Plot No. 130, Zone 2, Maharana Pratap Nagar, Bhopal, Madhya Pradesh – 462011',
+    phone: '+91 6262 9555 06',
+    hours: '8:00 AM – 10:30 PM',
+    mapsUrl: 'https://www.google.com/maps/place/Meenu%27s+Dosa+-+MP+Nagar',
+    zomatoUrl: 'https://www.zomato.com/bhopal/meenus-dosa-maharana-pratap-nagar/',
+    swiggyUrl: 'https://www.swiggy.com/restaurants/bhopal/maharana-pratap-nagar/meenu-s-dosa-812869/dineout',
+  },
+]
 
 export const menuService = { list: async () => menu, categories: async () => categories }
 export const bookingService = { create: async (payload: Record<string, unknown>) => { if (!siteConfig.apiUrl) return { ok: false, error: 'Booking API is not connected yet.' }; const response = await fetch(`${siteConfig.apiUrl}/bookings`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) }); return response.json() } }

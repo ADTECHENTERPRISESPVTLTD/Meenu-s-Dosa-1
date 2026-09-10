@@ -1,12 +1,12 @@
 import Link from 'next/link'
 import { ArrowUpRight, Camera, MapPin, MessageCircle, Phone, Share2 } from 'lucide-react'
 import { Shell } from '@/components/site-shell'
-import { siteConfig } from '@/lib/data'
+import { siteConfig, locations } from '@/lib/data'
 
 const channels = [
-  { label: 'Call', icon: Phone, href: 'tel:+919876543210', text: '+91 98765 43210' },
-  { label: 'WhatsApp', icon: MessageCircle, href: siteConfig.integrations.whatsapp || 'https://wa.me/919876543210', text: 'Chat with us' },
-  { label: 'Instagram', icon: Camera, href: siteConfig.integrations.instagram || 'https://instagram.com/meenusdosa', text: '@meenusdosa' },
+  { label: 'Call', icon: Phone, href: `tel:${locations[0].phone.replace(/\s/g, '')}`, text: locations[0].phone },
+  { label: 'WhatsApp', icon: MessageCircle, href: siteConfig.integrations.whatsapp, text: 'Chat via Linktree' },
+  { label: 'Instagram', icon: Camera, href: siteConfig.integrations.instagram, text: '@meenusdosa' },
   { label: 'Zomato', icon: Share2, href: siteConfig.integrations.zomato, text: 'Order on Zomato' },
   { label: 'Swiggy', icon: Share2, href: siteConfig.integrations.swiggy, text: 'Order on Swiggy' },
 ]
@@ -23,7 +23,7 @@ export default function Contact() {
 
         <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {channels.map((channel) => (
-            <Link
+            <a
               key={channel.label}
               href={channel.href}
               target="_blank"
@@ -36,13 +36,13 @@ export default function Contact() {
               <span className="mt-3 inline-flex items-center gap-1 text-xs font-bold text-primary">
                 Open <ArrowUpRight size={14} className="transition group-hover:translate-x-1" />
               </span>
-            </Link>
+            </a>
           ))}
 
           <div className="rounded-3xl border bg-card p-6">
             <MapPin className="text-primary" />
             <h2 className="mt-5 font-bold">Visit us</h2>
-            <p className="mt-2 text-sm text-muted-foreground">Verified locations coming soon</p>
+            <p className="mt-2 text-sm text-muted-foreground">Two outlets in Bhopal — Minal Residency &amp; MP Nagar</p>
             <Link href="/locations" className="mt-3 inline-flex items-center gap-1 text-xs font-bold text-primary">
               View locations <ArrowUpRight size={14} />
             </Link>
