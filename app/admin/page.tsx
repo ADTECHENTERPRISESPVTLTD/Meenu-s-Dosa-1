@@ -3,13 +3,13 @@
 import { useMemo, useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { LogOut, Pencil, Plus, Trash2, X, Calendar, MapPin, Globe } from 'lucide-react'
-import { menu as initialMenu, categories, formatPrice, siteConfig, type MenuItem } from '@/lib/data'
+import { LogOut, Pencil, Plus, Trash2, X, Calendar, MapPin, Globe, Loader2 } from 'lucide-react'
+import { categories, formatPrice, siteConfig, type MenuItem } from '@/lib/data'
 import { Shell } from '@/components/site-shell'
+import { adminApi } from '@/lib/api'
+import { useAdminAuth } from '@/lib/auth-context'
 
-const ADMIN_EMAIL = ''
-const ADMIN_PASSWORD = ''
-const SESSION_KEY = ''
+const SESSION_KEY = 'meenu-dosa-admin-session'
 const ORDER_HISTORY_KEY = 'meenu-dosa-orders'
 const BOOKINGS_KEY = 'meenu-dosa-bookings'
 const LOCATIONS_KEY = 'meenu-dosa-locations'
@@ -18,6 +18,7 @@ const CONTENT_KEY = 'meenu-dosa-content'
 type Tab = 'dashboard' | 'orders' | 'bookings' | 'menu' | 'locations' | 'content' | 'settings'
 type OrderStatus = 'pending' | 'confirmed' | 'preparing' | 'ready' | 'delivered' | 'cancelled'
 type PaymentMethod = 'qr' | 'cash' | 'zomato' | 'swiggy'
+type BookingStatus = 'pending' | 'confirmed' | 'cancelled'
 
 interface OrderItem {
   id: string
@@ -49,8 +50,9 @@ const STATUS_COLORS: Record<OrderStatus, string> = {
 
 export default function AdminDashboard() {
   const router = useRouter()
+  const { admin, token, loading: authLoading, logout, refresh } = useAdminAuth()
   const [tab, setTab] = useState<Tab>('dashboard')
-  const [menuItems, setMenuItems] = useState(initialMenu)
+  const [menuItems, setMenuItems] = useState<MenuItem[]>([])
   const [showForm, setShowForm] = useState(false)
   const [editing, setEditing] = useState<MenuItem | null>(null)
   const [form, setForm] = useState({ name: '', category: categories[0]?.id ?? '', price: '' })
@@ -63,6 +65,37 @@ export default function AdminDashboard() {
   const [locations, setLocations] = useState<any[]>([])
   const [content, setContent] = useState({ name: siteConfig.name, tagline: siteConfig.tagline, description: siteConfig.description, phone: '', whatsapp: '', instagram: '', zomato: siteConfig.integrations.zomato, swiggy: siteConfig.integrations.swiggy })
   const [contentSaving, setContentSaving] = useState(false)
+  const [loading, setLoading] = useState(true)
+  const [saving, setSaving] = useState(false)
+
+  useEffect(() => {
+    if (!authLoading && !token) {
+      router.replace('/admin/login')
+    }
+  }, [authLoading, token, router])
+
+  const fetchDashboardData = async () => {
+    try {
+      const [menuRes, bookingsRes, locationsRes] = await Promise.all([
+        adminApi.menu.list(),
+        adminApi.bookings.list(),
+        adminApi.locations.list(),
+      ])
+      if (menuRes.success) setMenuItems(menuRes.data)
+      if (bookingsRes.success) setBookings(bookingsRes.data.bookings)
+      if (locationsRes.success) setLocations(locationsRes.data)
+      setLoading(false)
+    } catch (err) {
+      console.error(err)
+      setLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    if (token) {
+      fetchDashboardData()
+    }
+  }, [token])
 
   useEffect(() => {
     try {
@@ -73,75 +106,103 @@ export default function AdminDashboard() {
 
   useEffect(() => {
     try {
-      const stored = localStorage.getItem(BOOKINGS_KEY)
-      if (stored) setBookings(JSON.parse(stored))
+      localStorage.setItem(ORDER_HISTORY_KEY, JSON.stringify(orders))
     } catch {}
-  }, [])
+  }, [orders])
 
-  useEffect(() => {
-    try {
-      const stored = localStorage.getItem(LOCATIONS_KEY)
-      if (stored) setLocations(JSON.parse(stored))
-    } catch {}
-  }, [])
-
-  const logout = () => {
-    localStorage.removeItem(SESSION_KEY)
+  const logoutHandler = () => {
+    logout()
+    router.replace('/admin/login')
   }
 
   const updateOrderStatus = (orderId: string, status: OrderStatus) => {
     setOrders((current) => current.map((order) => order.id === orderId ? { ...order, status } : order))
-    try {
-      localStorage.setItem(ORDER_HISTORY_KEY, JSON.stringify(orders.map((order) => order.id === orderId ? { ...order, status } : order)))
-    } catch {}
   }
 
   const togglePaymentStatus = (orderId: string) => {
     setOrders((current) => current.map((order) => order.id === orderId ? { ...order, paid: !order.paid } : order))
-    try {
-      localStorage.setItem(ORDER_HISTORY_KEY, JSON.stringify(orders.map((order) => order.id === orderId ? { ...order, paid: !order.paid } : order)))
-    } catch {}
   }
 
   const deleteOrder = (orderId: string) => {
     if (window.confirm('Delete this order?')) {
       setOrders((current) => current.filter((order) => order.id !== orderId))
-      try {
-        localStorage.setItem(ORDER_HISTORY_KEY, JSON.stringify(orders.filter((order) => order.id !== orderId)))
-      } catch {}
     }
   }
 
-  const saveItem = (event: React.FormEvent) => {
+  const saveItem = async (event: React.FormEvent) => {
     event.preventDefault()
     const name = form.name.trim()
     const price = Number(form.price)
     if (!name || !Number.isFinite(price) || price <= 0) return
-    if (editing) {
-      setMenuItems((current) => current.map((item) => item.id === editing.id ? { ...item, name, category: form.category, price } : item))
-    } else {
-      setMenuItems((current) => [{ id: `draft-${Date.now()}`, name, category: form.category, price, vegetarian: true, available: true, image: categories.find((c) => c.id === form.category)?.image ?? '/images/categories/dosa.jpg' }, ...current])
+
+    setSaving(true)
+    try {
+      if (editing) {
+        const res = await adminApi.menu.update(editing.id, { name, category: form.category, price })
+        if (res.success) {
+          setMenuItems((current) => current.map((item) => item.id === editing.id ? { ...item, name, category: form.category, price } : item))
+        }
+      } else {
+        const res = await adminApi.menu.create({ name, category: form.category, price, isAvailable: true, isVegetarian: true })
+        if (res.success) {
+          setMenuItems((current) => [{ ...res.data, id: res.data._id || res.data.id }, ...current])
+        }
+      }
+      setShowForm(false)
+    } catch (err) {
+      console.error(err)
+      alert('Failed to save menu item')
+    } finally {
+      setSaving(false)
     }
-    setShowForm(false)
   }
 
-  const deleteItem = (item: MenuItem) => {
-    if (window.confirm(`Delete ${item.name}?`)) setMenuItems((current) => current.filter((entry) => entry.id !== item.id))
+  const deleteItem = async (item: MenuItem) => {
+    if (window.confirm(`Delete ${item.name}?`)) {
+      try {
+        const res = await adminApi.menu.delete(item.id)
+        if (res.success) {
+          setMenuItems((current) => current.filter((entry) => entry.id !== item.id))
+        }
+      } catch (err) {
+        console.error(err)
+        alert('Failed to delete menu item')
+      }
+    }
   }
 
-  const updateBookingStatus = (bookingId: string, status: string) => {
-    setBookings((current) => current.map((booking) => booking.id === bookingId ? { ...booking, status } : booking))
-    try { localStorage.setItem(BOOKINGS_KEY, JSON.stringify(bookings.map((booking) => booking.id === bookingId ? { ...booking, status } : booking))) } catch {}
+  const toggleAvailability = async (item: MenuItem) => {
+    try {
+      const res = await adminApi.menu.update(item.id, { isAvailable: !item.available })
+      if (res.success) {
+        setMenuItems((current) => current.map((entry) => entry.id === item.id ? { ...entry, available: !entry.available } : entry))
+      }
+    } catch (err) {
+      console.error(err)
+      alert('Failed to update availability')
+    }
   }
 
-  const deleteBooking = (bookingId: string) => {
+  const updateBookingStatus = async (bookingId: string, status: string) => {
+    try {
+      const res = await adminApi.bookings.updateStatus(bookingId, status)
+      if (res.success) {
+        setBookings((current) => current.map((booking) => booking.id === bookingId ? { ...booking, status } : booking))
+      }
+    } catch (err) {
+      console.error(err)
+      alert('Failed to update booking status')
+    }
+  }
+
+  const deleteBooking = async (bookingId: string) => {
     if (window.confirm('Delete this booking?')) {
+      // No delete API for bookings, just remove from local state
       setBookings((current) => current.filter((booking) => booking.id !== bookingId))
-      try { localStorage.setItem(BOOKINGS_KEY, JSON.stringify(bookings.filter((booking) => booking.id !== bookingId))) } catch {}
     }
   }
 
-  const saveLocation = (event: React.FormEvent) => {
+  const saveLocation = async (event: React.FormEvent) => {
     event.preventDefault()
     const name = (event.target as any).name.value.trim()
     const address = (event.target as any).address.value.trim()
@@ -149,16 +210,34 @@ export default function AdminDashboard() {
     const hours = (event.target as any).hours.value.trim()
     const mapsUrl = (event.target as any).mapsUrl.value.trim()
     if (!name || !address) return
-    const entry = { id: `loc-${Date.now()}`, name, address, phone, hours, mapsUrl }
-    setLocations((current) => [...current, entry])
-    try { localStorage.setItem(LOCATIONS_KEY, JSON.stringify([...locations, entry])) } catch {}
-    ;(event.target as HTMLFormElement).reset()
+
+    setSaving(true)
+    try {
+      const res = await adminApi.locations.create({ name, address, phone, hours, mapsUrl, isActive: true })
+      if (res.success) {
+        const entry = { ...res.data, id: res.data._id || res.data.id }
+        setLocations((current) => [...current, entry])
+      }
+      ;(event.target as HTMLFormElement).reset()
+    } catch (err) {
+      console.error(err)
+      alert('Failed to save location')
+    } finally {
+      setSaving(false)
+    }
   }
 
-  const deleteLocation = (locationId: string) => {
+  const deleteLocation = async (locationId: string) => {
     if (window.confirm('Delete this location?')) {
-      setLocations((current) => current.filter((loc) => loc.id !== locationId))
-      try { localStorage.setItem(LOCATIONS_KEY, JSON.stringify(locations.filter((loc) => loc.id !== locationId))) } catch {}
+      try {
+        const res = await adminApi.locations.delete(locationId)
+        if (res.success) {
+          setLocations((current) => current.filter((loc) => loc.id !== locationId))
+        }
+      } catch (err) {
+        console.error(err)
+        alert('Failed to delete location')
+      }
     }
   }
 
@@ -224,17 +303,31 @@ export default function AdminDashboard() {
     const totalRevenue = revenueStats.totalRevenue
     const totalItems = menuItems.length
     const availableItems = menuItems.filter((item) => item.available).length
+    const pendingBookings = bookings.filter((b: any) => b.status === 'pending').length
+    const confirmedBookings = bookings.filter((b: any) => b.status === 'confirmed').length
     return [
       { label: 'Total orders', value: String(totalOrders), change: 'Lifetime' },
       { label: 'Revenue', value: formatPrice(totalRevenue), change: 'All time' },
       { label: 'Collected', value: formatPrice(revenueStats.collectedRevenue), change: 'Paid orders' },
       { label: 'Pending payment', value: formatPrice(revenueStats.pendingRevenue), change: 'Unpaid orders' },
       { label: 'Menu items', value: `${availableItems}/${totalItems}`, change: 'Active/total' },
+      { label: 'Pending bookings', value: String(pendingBookings), change: 'Awaiting confirmation' },
+      { label: 'Confirmed bookings', value: String(confirmedBookings), change: 'Approved' },
       { label: 'Zomato orders', value: String(revenueStats.zomatoOrders), change: 'Via Zomato' },
       { label: 'Swiggy orders', value: String(revenueStats.swiggyOrders), change: 'Via Swiggy' },
       { label: 'Direct orders', value: String(revenueStats.directOrders), change: 'In-restaurant' },
     ]
-  }, [orders, menuItems, revenueStats])
+  }, [orders, menuItems, revenueStats, bookings])
+
+  if (authLoading || loading) {
+    return (
+      <Shell>
+        <main className="min-h-screen bg-muted/40 flex items-center justify-center">
+          <Loader2 className="h-12 w-12 animate-spin text-primary" />
+        </main>
+      </Shell>
+    )
+  }
 
   return (
     <Shell>
@@ -248,7 +341,7 @@ export default function AdminDashboard() {
             </div>
             <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
               <Link href="/" className="text-sm font-bold underline underline-offset-4">View website</Link>
-              <button onClick={logout} className="inline-flex items-center justify-center gap-2 rounded-full border px-4 py-2 text-sm font-bold">
+              <button onClick={logoutHandler} className="inline-flex items-center justify-center gap-2 rounded-full border px-4 py-2 text-sm font-bold">
                 <LogOut size={16}/> Logout
               </button>
             </div>
@@ -275,7 +368,7 @@ export default function AdminDashboard() {
           </nav>
 
           {tab === 'dashboard' && (
-            <section className="mt-8 grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
+            <section className="mt-8 grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-5">
               {stats.map((stat) => (
                 <div key={stat.label} className="rounded-2xl border bg-card p-5">
                   <p className="text-sm text-muted-foreground">{stat.label}</p>
@@ -379,7 +472,7 @@ export default function AdminDashboard() {
                   </select>
                   <input required min="1" step="1" value={form.price} onChange={(e) => setForm({ ...form, price: e.target.value })} placeholder="Price" type="number" className="h-11 rounded-xl border bg-background px-3"/>
                   <div className="flex gap-2">
-                    <button type="submit" className="flex-1 rounded-xl bg-primary px-4 py-3 text-sm font-bold text-primary-foreground">{editing ? 'Save' : 'Add'}</button>
+                    <button type="submit" disabled={saving} className="flex-1 rounded-xl bg-primary px-4 py-3 text-sm font-bold text-primary-foreground disabled:opacity-60">{saving ? (editing ? 'Saving...' : 'Adding...') : (editing ? 'Save' : 'Add')}</button>
                     <button type="button" onClick={() => setShowForm(false)} className="rounded-xl border p-3"><X size={18}/></button>
                   </div>
                 </form>
@@ -402,13 +495,13 @@ export default function AdminDashboard() {
                     </tr>
                   </thead>
                   <tbody>
-                    {menuItems.filter((item) => menuCategoryFilter === 'all' || item.category === menuCategoryFilter).slice(0, 12).map((item) => (
+                    {menuItems.filter((item) => menuCategoryFilter === 'all' || item.category === menuCategoryFilter).map((item) => (
                       <tr key={item.id} className="border-b last:border-0">
                         <td className="py-4 font-semibold">{item.name}</td>
                         <td className="py-4 text-muted-foreground">{item.category}</td>
                         <td className="py-4">₹{item.price}</td>
                         <td className="py-4">
-                          <button type="button" onClick={() => setMenuItems((current) => current.map((entry) => entry.id === item.id ? { ...entry, available: !entry.available } : entry))} className={`rounded-full px-3 py-1 text-xs font-bold ${item.available ? 'bg-primary/15 text-primary' : 'bg-muted text-muted-foreground'}`}>
+                          <button type="button" onClick={() => toggleAvailability(item)} className={`rounded-full px-3 py-1 text-xs font-bold ${item.available ? 'bg-primary/15 text-primary' : 'bg-muted text-muted-foreground'}`}>
                             {item.available ? 'Available' : 'Unavailable'}
                           </button>
                         </td>
@@ -436,6 +529,7 @@ export default function AdminDashboard() {
                   <p className="text-xs text-muted-foreground">Name: Meenu&apos;s Dosa</p>
                   <p className="text-xs text-muted-foreground">Type: South Indian restaurant</p>
                   <p className="mt-2 text-xs text-muted-foreground">Admin access is managed by the backend authentication system.</p>
+                  <p className="mt-2 text-xs text-muted-foreground">Logged in as: {admin?.email || 'Unknown'}</p>
                 </div>
               </div>
             </section>
@@ -469,21 +563,21 @@ export default function AdminDashboard() {
                     <tbody>
                       {bookings.map((booking) => (
                         <tr key={booking.id} className="border-b last:border-0">
-                          <td className="py-4 font-semibold">#{booking.id}</td>
-                          <td className="py-4">{booking.name}</td>
+                          <td className="py-4 font-semibold">#{booking._id || booking.id}</td>
+                          <td className="py-4">{booking.customerName}</td>
                           <td className="py-4 text-muted-foreground">{booking.phone}</td>
-                          <td className="py-4">{booking.date}</td>
+                          <td className="py-4">{new Date(booking.date).toLocaleDateString()}</td>
                           <td className="py-4">{booking.time}</td>
-                          <td className="py-4">{booking.guests}</td>
+                          <td className="py-4">{booking.guestCount}</td>
                           <td className="py-4">
-                            <select value={booking.status || 'pending'} onChange={(e) => updateBookingStatus(booking.id, e.target.value)} className={`rounded-full px-3 py-1 text-xs font-bold ${booking.status === 'confirmed' ? 'bg-green-500/15 text-green-700' : booking.status === 'cancelled' ? 'bg-destructive/15 text-destructive' : 'bg-yellow-500/15 text-yellow-700'}`}>
+                            <select value={booking.status || 'pending'} onChange={(e) => updateBookingStatus(booking._id || booking.id, e.target.value)} className={`rounded-full px-3 py-1 text-xs font-bold ${booking.status === 'confirmed' ? 'bg-green-500/15 text-green-700' : booking.status === 'cancelled' ? 'bg-destructive/15 text-destructive' : 'bg-yellow-500/15 text-yellow-700'}`}>
                               <option value="pending">Pending</option>
                               <option value="confirmed">Confirmed</option>
                               <option value="cancelled">Cancelled</option>
                             </select>
                           </td>
                           <td className="py-4">
-                            <button onClick={() => deleteBooking(booking.id)} className="rounded-lg border p-2 text-destructive"><Trash2 size={15}/></button>
+                            <button onClick={() => deleteBooking(booking._id || booking.id)} className="rounded-lg border p-2 text-destructive"><Trash2 size={15}/></button>
                           </td>
                         </tr>
                       ))}
@@ -508,11 +602,11 @@ export default function AdminDashboard() {
                 <input name="phone" placeholder="Phone" className="h-11 rounded-xl border bg-background px-3"/>
                 <input name="hours" placeholder="Opening hours" className="h-11 rounded-xl border bg-background px-3"/>
                 <input name="mapsUrl" placeholder="Google Maps URL" className="h-11 rounded-xl border bg-background px-3"/>
-                <button type="submit" className="rounded-xl bg-primary px-4 py-3 text-sm font-bold text-primary-foreground">Add location</button>
+                <button type="submit" disabled={saving} className="rounded-xl bg-primary px-4 py-3 text-sm font-bold text-primary-foreground disabled:opacity-60">{saving ? 'Adding...' : 'Add location'}</button>
               </form>
               <div className="mt-6 grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
                 {locations.map((loc) => (
-                  <div key={loc.id} className="rounded-2xl border bg-background p-4">
+                  <div key={loc._id || loc.id} className="rounded-2xl border bg-background p-4">
                     <div className="flex items-start justify-between">
                       <div>
                         <p className="font-bold">{loc.name}</p>
@@ -520,7 +614,7 @@ export default function AdminDashboard() {
                         <p className="mt-1 text-xs text-muted-foreground">{loc.phone}</p>
                         <p className="mt-1 text-xs text-muted-foreground">{loc.hours}</p>
                       </div>
-                      <button onClick={() => deleteLocation(loc.id)} className="rounded-lg border p-2 text-destructive"><Trash2 size={15}/></button>
+                      <button onClick={() => deleteLocation(loc._id || loc.id)} className="rounded-lg border p-2 text-destructive"><Trash2 size={15}/></button>
                     </div>
                     {loc.mapsUrl && <a href={loc.mapsUrl} target="_blank" rel="noreferrer noopener" className="mt-2 inline-flex items-center gap-1 text-xs font-bold text-primary">Open map <MapPin size={14}/></a>}
                   </div>

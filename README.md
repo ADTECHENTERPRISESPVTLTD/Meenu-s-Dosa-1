@@ -22,6 +22,16 @@ pnpm dev
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
+## Backend connection
+
+Create `.env.local` with the backend URL before starting the frontend:
+
+```env
+NEXT_PUBLIC_API_URL=http://localhost:5000
+```
+
+Start the API from the sibling `backend` directory with `npm run dev`. Public menu, category, location, settings, and booking requests plus protected admin requests use the shared API client in `lib/api.ts`.
+
 You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
 
 ## Learn More

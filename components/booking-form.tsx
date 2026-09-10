@@ -1,7 +1,7 @@
 'use client'
 
-import { useState, type FormEvent } from 'react'
-import { bookingService } from '@/lib/data'
+import { useEffect, useState, type FormEvent } from 'react'
+import { bookingApi, locationApi } from '@/lib/api'
 
 type BookingState = 'idle' | 'loading' | 'success' | 'error'
 
@@ -15,7 +15,9 @@ export function BookingForm() {
     time: '',
     guests: '2',
     message: '',
+    location: '',
   })
+  const [locations, setLocations] = useState<Array<{ id: string; name: string }>>([])
 
   const validate = () => {
     const newErrors: Record<string, string> = {}
@@ -24,8 +26,27 @@ export function BookingForm() {
     if (!formData.date) newErrors.date = 'Date is required'
     if (!formData.time) newErrors.time = 'Time is required'
     if (!formData.guests || Number(formData.guests) < 1) newErrors.guests = 'At least 1 guest is required'
+    if (!formData.location) newErrors.location = 'Please select a location'
     return newErrors
   }
+
+  const fetchLocations = async () => {
+    try {
+      const response = await locationApi.list()
+      if (response.success) {
+        setLocations(response.data.filter((location: any) => location.isActive).map((location: any) => ({
+          id: location._id || location.id,
+          name: location.name,
+        })))
+      }
+    } catch {
+      setLocations([])
+    }
+  }
+
+  useEffect(() => {
+    fetchLocations()
+  }, [])
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault()
@@ -39,19 +60,24 @@ export function BookingForm() {
 
     setState('loading')
     try {
-      const result = await bookingService.create({
-        ...formData,
-        guests: Number(formData.guests),
+      const result = await bookingApi.create({
+        customerName: formData.name,
+        phone: formData.phone,
+        date: formData.date,
+        time: formData.time,
+        guestCount: Number(formData.guests),
+        message: formData.message,
+        location: formData.location,
       })
-      if (result.ok) {
+      if (result.success) {
         setState('success')
-        setFormData({ name: '', phone: '', date: '', time: '', guests: '2', message: '' })
+        setFormData({ name: '', phone: '', date: '', time: '', guests: '2', message: '', location: '' })
       } else {
-        setErrors({ form: result.error || 'Booking API is not connected yet.' })
+        setErrors({ form: result.message || 'Booking failed.' })
         setState('error')
       }
-    } catch {
-      setErrors({ form: 'Something went wrong. Please try again.' })
+    } catch (err: any) {
+      setErrors({ form: err.message || 'Something went wrong. Please try again.' })
       setState('error')
     }
   }
@@ -99,6 +125,7 @@ export function BookingForm() {
             value={formData.date}
             onChange={(e) => setFormData((f) => ({ ...f, date: e.target.value }))}
             className={inputClassName('date')}
+            min={new Date().toISOString().split('T')[0]}
           />
           {errors.date && <span className="text-xs text-destructive">{errors.date}</span>}
         </label>
@@ -128,6 +155,23 @@ export function BookingForm() {
             className={inputClassName('guests')}
           />
           {errors.guests && <span className="text-xs text-destructive">{errors.guests}</span>}
+        </label>
+
+        <label className="grid gap-2 text-sm font-semibold sm:col-span-2">
+          Location <span className="text-destructive">*</span>
+          <select
+            required
+            name="location"
+            value={formData.location}
+            onChange={(e) => setFormData((f) => ({ ...f, location: e.target.value }))}
+            className={inputClassName('location')}
+          >
+            <option value="">Select outlet</option>
+            {locations.map((loc) => (
+              <option key={loc.id} value={loc.id}>{loc.name}</option>
+            ))}
+          </select>
+          {errors.location && <span className="text-xs text-destructive">{errors.location}</span>}
         </label>
       </div>
 
