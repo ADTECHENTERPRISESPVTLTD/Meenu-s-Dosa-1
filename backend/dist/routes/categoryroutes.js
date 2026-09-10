@@ -1,0 +1,10 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+const express_1 = require("express");
+const categoryController_1 = require("../controllers/categoryController");
+const validators_1 = require("../validators/validators");
+const validate_1 = require("../middleware/validate");
+const router = (0, express_1.Router)();
+router.get('/', categoryController_1.listCategories);
+router.get('/:id', (0, validators_1.mongoIdParamValidator)(), validate_1.handleValidation, categoryController_1.getCategory);
+exports.default = router;
