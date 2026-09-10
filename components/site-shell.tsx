@@ -11,7 +11,7 @@ const navigation = [['Home','/'],['Menu','/menu'],['Our story','/about'],['Locat
 export function Header(){
   const [open,setOpen]=useState(false)
   const {dark,toggle}=useTheme()
-  return <header className="sticky top-0 z-40 border-b border-border/70 bg-background/95 backdrop-blur">
+  return <header className="sticky top-0 z-40 border-b-2 border-border bg-background shadow-sm">
     <div className="mx-auto flex min-h-16 max-w-7xl items-center justify-between gap-4 px-4 sm:px-6">
       <Link href="/" onClick={()=>setOpen(false)} className="flex shrink-0 items-center gap-2 font-black tracking-tight">
         <span className="grid size-9 place-items-center rounded-full bg-primary text-primary-foreground">M</span>
