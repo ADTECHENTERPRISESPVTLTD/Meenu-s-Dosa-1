@@ -24,19 +24,19 @@ export function Header(){
       </nav>
       <div className="flex items-center gap-2 lg:hidden">
         <button aria-label="Toggle theme" onClick={toggle} className="rounded-full border p-2">{dark?<Sun size={16}/>:<Moon size={16}/>}</button>
-        <button aria-expanded={open} aria-controls="mobile-navigation" aria-label={open ? 'Close navigation' : 'Open navigation'} onClick={()=>setOpen(!open)} className="rounded-full border p-2">{open?<X size={18}/>:<Menu size={18}/>}</button>
+        <button aria-expanded={open} aria-controls="mobile-navigation" aria-label={open ? 'Close navigation' : 'Open navigation'} onClick={()=>setOpen(!open)} className="grid size-10 place-items-center rounded-full border-2 border-foreground bg-foreground text-background shadow-sm">{open?<X size={20}/>:<Menu size={20}/>}</button>
       </div>
     </div>
     {open && <div className="fixed inset-0 z-50 lg:hidden">
-      <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={()=>setOpen(false)} />
-      <nav id="mobile-navigation" aria-label="Mobile navigation" className="absolute right-0 top-0 h-full w-[82%] max-w-sm border-l bg-background shadow-2xl">
-        <div className="flex items-center justify-between border-b px-4 py-3">
-          <span className="font-black">{siteConfig.name}</span>
-          <button aria-label="Close navigation" onClick={()=>setOpen(false)} className="rounded-full border p-2"><X size={18}/></button>
+      <div className="absolute inset-0 bg-black/60 backdrop-blur-md" onClick={()=>setOpen(false)} />
+      <nav id="mobile-navigation" aria-label="Mobile navigation" className="absolute right-0 top-0 h-full w-[85%] max-w-sm border-l-2 border-border bg-background shadow-2xl">
+        <div className="flex items-center justify-between border-b border-border px-4 py-4">
+          <span className="text-lg font-black">{siteConfig.name}</span>
+          <button aria-label="Close navigation" onClick={()=>setOpen(false)} className="grid size-10 place-items-center rounded-full border-2 border-foreground bg-foreground text-background"><X size={20}/></button>
         </div>
         <div className="flex flex-col gap-1 px-3 py-4">
-          {navigation.map(([label,href])=><Link onClick={()=>setOpen(false)} key={href} href={href} className="rounded-lg px-3 py-3 text-sm font-medium hover:bg-muted">{label}</Link>)}
-          <Link onClick={()=>setOpen(false)} href="/book" className="mt-2 rounded-lg bg-primary px-3 py-3 text-center text-sm font-bold text-primary-foreground">Book a table</Link>
+          {navigation.map(([label,href])=><Link onClick={()=>setOpen(false)} key={href} href={href} className="rounded-xl px-4 py-4 text-base font-bold hover:bg-muted">{label}</Link>)}
+          <Link onClick={()=>setOpen(false)} href="/book" className="mt-2 rounded-xl bg-primary px-4 py-4 text-center text-base font-bold text-primary-foreground">Book a table</Link>
         </div>
       </nav>
     </div>}
