@@ -266,12 +266,12 @@ export default function AdminDashboard() {
           <div className="flex flex-col justify-between gap-5 sm:flex-row sm:items-center">
             <div>
               <p className="text-sm font-bold uppercase tracking-[.2em] text-primary">Admin dashboard</p>
-              <h1 className="mt-2 text-4xl font-black tracking-tight">Welcome, {session?.email}</h1>
+              <h1 className="mt-2 text-3xl font-black tracking-tight sm:text-4xl">Welcome, {session?.email}</h1>
               <p className="mt-2 max-w-xl text-sm text-muted-foreground">Manage orders, track revenue, and update your menu.</p>
             </div>
-            <div className="flex items-center gap-3">
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
               <Link href="/" className="text-sm font-bold underline underline-offset-4">View website</Link>
-              <button onClick={logout} className="inline-flex items-center gap-2 rounded-full border px-4 py-2 text-sm font-bold">
+              <button onClick={logout} className="inline-flex items-center justify-center gap-2 rounded-full border px-4 py-2 text-sm font-bold">
                 <LogOut size={16}/> Logout
               </button>
             </div>
@@ -298,7 +298,7 @@ export default function AdminDashboard() {
           </nav>
 
           {tab === 'dashboard' && (
-            <section className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            <section className="mt-8 grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
               {stats.map((stat) => (
                 <div key={stat.label} className="rounded-2xl border bg-card p-5">
                   <p className="text-sm text-muted-foreground">{stat.label}</p>
@@ -317,18 +317,18 @@ export default function AdminDashboard() {
                   <p className="mt-1 text-sm text-muted-foreground">Track, update status, and manage all orders.</p>
                 </div>
               </div>
-              <div className="mt-4 flex flex-wrap gap-2">
-                <select value={orderFilter} onChange={(e) => setOrderFilter(e.target.value as any)} className="h-10 rounded-full border bg-background px-3 text-sm font-semibold">
+              <div className="mt-4 flex flex-col gap-2 sm:flex-row sm:flex-wrap">
+                <select value={orderFilter} onChange={(e) => setOrderFilter(e.target.value as any)} className="h-10 rounded-full border bg-background px-3 text-sm font-semibold w-full sm:w-auto">
                   <option value="all">All sources</option>
                   <option value="direct">Direct</option>
                   <option value="zomato">Zomato</option>
                   <option value="swiggy">Swiggy</option>
                 </select>
-                <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value as any)} className="h-10 rounded-full border bg-background px-3 text-sm font-semibold">
+                <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value as any)} className="h-10 rounded-full border bg-background px-3 text-sm font-semibold w-full sm:w-auto">
                   <option value="all">All statuses</option>
                   {STATUS_OPTIONS.map((status) => <option key={status} value={status}>{status}</option>)}
                 </select>
-                <select value={paymentFilter} onChange={(e) => setPaymentFilter(e.target.value as any)} className="h-10 rounded-full border bg-background px-3 text-sm font-semibold">
+                <select value={paymentFilter} onChange={(e) => setPaymentFilter(e.target.value as any)} className="h-10 rounded-full border bg-background px-3 text-sm font-semibold w-full sm:w-auto">
                   <option value="all">All payments</option>
                   <option value="paid">Paid</option>
                   <option value="unpaid">Unpaid</option>
@@ -337,7 +337,7 @@ export default function AdminDashboard() {
               {filteredOrders.length === 0 ? (
                 <p className="mt-6 text-sm text-muted-foreground">No orders match the current filters.</p>
               ) : (
-                <div className="mt-6 overflow-x-auto">
+                <div className="mt-6 overflow-x-auto -mx-5 px-5 sm:mx-0 sm:px-0">
                   <table className="w-full min-w-[900px] text-left text-sm">
                     <thead className="border-b text-muted-foreground">
                       <tr>
@@ -390,28 +390,30 @@ export default function AdminDashboard() {
                   <h2 className="text-2xl font-black">Menu management</h2>
                   <p className="mt-1 text-sm text-muted-foreground">Add, edit, delete and toggle availability.</p>
                 </div>
-                <button onClick={() => { setEditing(null); setForm({ name: '', category: categories[0]?.id ?? '', price: '' }); setShowForm(true) }} className="inline-flex items-center gap-2 rounded-full bg-primary px-4 py-2 text-sm font-bold text-primary-foreground">
+                <button onClick={() => { setEditing(null); setForm({ name: '', category: categories[0]?.id ?? '', price: '' }); setShowForm(true) }} className="inline-flex items-center justify-center gap-2 rounded-full bg-primary px-4 py-3 text-sm font-bold text-primary-foreground">
                   <Plus size={16}/> Add dish
                 </button>
               </div>
               {showForm && (
-                <form onSubmit={saveItem} className="mt-6 grid gap-3 rounded-2xl border bg-muted/30 p-4 sm:grid-cols-[1.4fr_1fr_.7fr_auto_auto]">
+                <form onSubmit={saveItem} className="mt-6 flex flex-col gap-3 rounded-2xl border bg-muted/30 p-4">
                   <input required value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="Dish name" className="h-11 rounded-xl border bg-background px-3"/>
                   <select value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })} className="h-11 rounded-xl border bg-background px-3">
                     {categories.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
                   </select>
                   <input required min="1" step="1" value={form.price} onChange={(e) => setForm({ ...form, price: e.target.value })} placeholder="Price" type="number" className="h-11 rounded-xl border bg-background px-3"/>
-                  <button type="submit" className="rounded-xl bg-primary px-4 py-2 text-sm font-bold text-primary-foreground">{editing ? 'Save' : 'Add'}</button>
-                  <button type="button" onClick={() => setShowForm(false)} className="rounded-xl border p-2"><X size={18}/></button>
+                  <div className="flex gap-2">
+                    <button type="submit" className="flex-1 rounded-xl bg-primary px-4 py-3 text-sm font-bold text-primary-foreground">{editing ? 'Save' : 'Add'}</button>
+                    <button type="button" onClick={() => setShowForm(false)} className="rounded-xl border p-3"><X size={18}/></button>
+                  </div>
                 </form>
               )}
               <div className="mt-4 flex flex-wrap gap-2">
-                <select value={menuCategoryFilter} onChange={(e) => setMenuCategoryFilter(e.target.value)} className="h-10 rounded-full border bg-background px-3 text-sm font-semibold">
+                <select value={menuCategoryFilter} onChange={(e) => setMenuCategoryFilter(e.target.value)} className="h-10 rounded-full border bg-background px-3 text-sm font-semibold w-full sm:w-auto">
                   <option value="all">All categories</option>
                   {categories.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
                 </select>
               </div>
-              <div className="mt-6 overflow-x-auto">
+              <div className="mt-6 overflow-x-auto -mx-5 px-5 sm:mx-0 sm:px-0">
                 <table className="w-full min-w-[700px] text-left text-sm">
                   <thead className="border-b text-muted-foreground">
                     <tr>
@@ -478,7 +480,7 @@ export default function AdminDashboard() {
               {bookings.length === 0 ? (
                 <p className="mt-6 text-sm text-muted-foreground">No bookings yet.</p>
               ) : (
-                <div className="mt-6 overflow-x-auto">
+                <div className="mt-6 overflow-x-auto -mx-5 px-5 sm:mx-0 sm:px-0">
                   <table className="w-full min-w-[700px] text-left text-sm">
                     <thead className="border-b text-muted-foreground">
                       <tr>
@@ -528,15 +530,15 @@ export default function AdminDashboard() {
                   <p className="mt-1 text-sm text-muted-foreground">Add and manage restaurant locations.</p>
                 </div>
               </div>
-              <form onSubmit={saveLocation} className="mt-6 grid gap-3 rounded-2xl border bg-muted/30 p-4 sm:grid-cols-2">
+              <form onSubmit={saveLocation} className="mt-6 flex flex-col gap-3 rounded-2xl border bg-muted/30 p-4">
                 <input required name="name" placeholder="Location name" className="h-11 rounded-xl border bg-background px-3"/>
                 <input required name="address" placeholder="Address" className="h-11 rounded-xl border bg-background px-3"/>
                 <input name="phone" placeholder="Phone" className="h-11 rounded-xl border bg-background px-3"/>
                 <input name="hours" placeholder="Opening hours" className="h-11 rounded-xl border bg-background px-3"/>
-                <input name="mapsUrl" placeholder="Google Maps URL" className="h-11 rounded-xl border bg-background px-3 sm:col-span-2"/>
-                <button type="submit" className="rounded-xl bg-primary px-4 py-2 text-sm font-bold text-primary-foreground">Add location</button>
+                <input name="mapsUrl" placeholder="Google Maps URL" className="h-11 rounded-xl border bg-background px-3"/>
+                <button type="submit" className="rounded-xl bg-primary px-4 py-3 text-sm font-bold text-primary-foreground">Add location</button>
               </form>
-              <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              <div className="mt-6 grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
                 {locations.map((loc) => (
                   <div key={loc.id} className="rounded-2xl border bg-background p-4">
                     <div className="flex items-start justify-between">
@@ -563,16 +565,16 @@ export default function AdminDashboard() {
                   <p className="mt-1 text-sm text-muted-foreground">Update website content and social links.</p>
                 </div>
               </div>
-              <form onSubmit={saveContent} className="mt-6 grid gap-4 rounded-2xl border bg-muted/30 p-4 sm:grid-cols-2">
-                <label className="grid gap-2 text-sm font-semibold sm:col-span-2">Restaurant name<input name="name" defaultValue={content.name} className="h-11 rounded-xl border bg-background px-3"/></label>
-                <label className="grid gap-2 text-sm font-semibold sm:col-span-2">Tagline<input name="tagline" defaultValue={content.tagline} className="h-11 rounded-xl border bg-background px-3"/></label>
-                <label className="grid gap-2 text-sm font-semibold sm:col-span-2">Description<textarea name="description" defaultValue={content.description} rows={3} className="rounded-xl border bg-background p-3"/></label>
+              <form onSubmit={saveContent} className="mt-6 flex flex-col gap-4 rounded-2xl border bg-muted/30 p-4">
+                <label className="grid gap-2 text-sm font-semibold">Restaurant name<input name="name" defaultValue={content.name} className="h-11 rounded-xl border bg-background px-3"/></label>
+                <label className="grid gap-2 text-sm font-semibold">Tagline<input name="tagline" defaultValue={content.tagline} className="h-11 rounded-xl border bg-background px-3"/></label>
+                <label className="grid gap-2 text-sm font-semibold">Description<textarea name="description" defaultValue={content.description} rows={3} className="rounded-xl border bg-background p-3"/></label>
                 <label className="grid gap-2 text-sm font-semibold">Phone<input name="phone" defaultValue={content.phone} className="h-11 rounded-xl border bg-background px-3"/></label>
                 <label className="grid gap-2 text-sm font-semibold">WhatsApp<input name="whatsapp" defaultValue={content.whatsapp} className="h-11 rounded-xl border bg-background px-3"/></label>
                 <label className="grid gap-2 text-sm font-semibold">Instagram<input name="instagram" defaultValue={content.instagram} className="h-11 rounded-xl border bg-background px-3"/></label>
                 <label className="grid gap-2 text-sm font-semibold">Zomato URL<input name="zomato" defaultValue={content.zomato} className="h-11 rounded-xl border bg-background px-3"/></label>
                 <label className="grid gap-2 text-sm font-semibold">Swiggy URL<input name="swiggy" defaultValue={content.swiggy} className="h-11 rounded-xl border bg-background px-3"/></label>
-                <button type="submit" disabled={contentSaving} className="rounded-xl bg-primary px-4 py-2 text-sm font-bold text-primary-foreground disabled:opacity-60 sm:col-span-2">{contentSaving ? 'Saving...' : 'Save content'}</button>
+                <button type="submit" disabled={contentSaving} className="rounded-xl bg-primary px-4 py-3 text-sm font-bold text-primary-foreground disabled:opacity-60">{contentSaving ? 'Saving...' : 'Save content'}</button>
               </form>
             </section>
           )}
