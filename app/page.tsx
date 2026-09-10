@@ -72,7 +72,7 @@ export default function Home() {
             <h2 className="mt-3 text-3xl font-black tracking-tight sm:text-5xl">Simple ingredients. Generous plates. A table that feels like home.</h2>
           </div>
           <div className="flex flex-col justify-end gap-5">
-            <p className="leading-7 text-muted-foreground">Meenu&apos;s Dosa is building a warm, welcoming place for South Indian food. This story section will stay grounded in approved restaurant information as the team connects the final content.</p>
+            <p className="leading-7 text-muted-foreground">Four decades of dosas, idlis, and warm hospitality — all in Bhopal. Every plate is made fresh, never rushed, and always worth sharing.</p>
             <Link href="/about" className="w-fit rounded-full bg-foreground px-5 py-3 text-sm font-bold text-background">Read our story <ArrowRight className="inline" size={16}/></Link>
           </div>
         </div>
@@ -86,6 +86,32 @@ export default function Home() {
               <h2 className="mt-3 max-w-2xl text-4xl font-black tracking-tight sm:text-6xl">Bring your appetite. We&apos;ll bring the dosa.</h2>
             </div>
             <Link href="/locations" className="w-fit rounded-full bg-foreground px-5 py-3 text-sm font-bold text-background">Find a location <ArrowRight className="inline" size={16}/></Link>
+          </div>
+        </div>
+      </section>
+
+      <section className="mx-auto max-w-7xl px-4 py-16 sm:px-6 md:py-24">
+        <div className="flex flex-col justify-between gap-4 md:flex-row md:items-end">
+          <div>
+            <p className="text-sm font-bold uppercase tracking-[.2em] text-primary">Chef&apos;s pick</p>
+            <h2 className="mt-2 text-3xl font-black tracking-tight sm:text-5xl">Today&apos;s special</h2>
+          </div>
+        </div>
+        <div className="mt-8 overflow-hidden rounded-[2rem] border bg-card">
+          <div className="grid md:grid-cols-[1fr_1.1fr]">
+            <div className="aspect-[4/3] md:aspect-auto">
+              <CategoryImage src="dosa.jpg" alt="Butter Masala Dosa" className="h-full w-full object-cover"/>
+            </div>
+            <div className="p-6 sm:p-10">
+              <span className="inline-flex items-center gap-2 rounded-full bg-primary/15 px-3 py-1 text-xs font-bold text-primary">Featured</span>
+              <h3 className="mt-4 text-3xl font-black">Butter Masala Dosa</h3>
+              <p className="mt-2 text-lg font-bold text-primary">₹209</p>
+              <p className="mt-3 max-w-md leading-7 text-muted-foreground">Crisp golden dosa stuffed with spiced potato masala, finished with a generous pat of butter. A Bhopal favourite for four decades.</p>
+              <div className="mt-6 flex flex-wrap gap-3">
+                <Link href="/menu" className="rounded-full bg-primary px-5 py-3 text-sm font-bold text-primary-foreground">Order now <ArrowRight className="inline" size={16}/></Link>
+                <Link href="/order" className="rounded-full border px-5 py-3 text-sm font-bold">Order via Zomato/Swiggy</Link>
+              </div>
+            </div>
           </div>
         </div>
       </section>
