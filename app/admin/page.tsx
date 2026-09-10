@@ -7,9 +7,9 @@ import { LogOut, Pencil, Plus, Trash2, X, Calendar, MapPin, Globe } from 'lucide
 import { menu as initialMenu, categories, formatPrice, siteConfig, type MenuItem } from '@/lib/data'
 import { Shell } from '@/components/site-shell'
 
-const ADMIN_EMAIL = 'admin@meenusdosa.com'
-const ADMIN_PASSWORD = 'admin123'
-const SESSION_KEY = 'meenu-dosa-admin-session'
+const ADMIN_EMAIL = ''
+const ADMIN_PASSWORD = ''
+const SESSION_KEY = ''
 const ORDER_HISTORY_KEY = 'meenu-dosa-orders'
 const BOOKINGS_KEY = 'meenu-dosa-bookings'
 const LOCATIONS_KEY = 'meenu-dosa-locations'
@@ -49,14 +49,12 @@ const STATUS_COLORS: Record<OrderStatus, string> = {
 
 export default function AdminDashboard() {
   const router = useRouter()
-  const [session, setSession] = useState<{ email: string } | null>(null)
   const [tab, setTab] = useState<Tab>('dashboard')
   const [menuItems, setMenuItems] = useState(initialMenu)
   const [showForm, setShowForm] = useState(false)
   const [editing, setEditing] = useState<MenuItem | null>(null)
   const [form, setForm] = useState({ name: '', category: categories[0]?.id ?? '', price: '' })
   const [orders, setOrders] = useState<Order[]>([])
-  const [initializing, setInitializing] = useState(true)
   const [orderFilter, setOrderFilter] = useState<'all' | 'direct' | 'zomato' | 'swiggy'>('all')
   const [statusFilter, setStatusFilter] = useState<'all' | OrderStatus>('all')
   const [paymentFilter, setPaymentFilter] = useState<'all' | 'paid' | 'unpaid'>('all')
@@ -65,15 +63,6 @@ export default function AdminDashboard() {
   const [locations, setLocations] = useState<any[]>([])
   const [content, setContent] = useState({ name: siteConfig.name, tagline: siteConfig.tagline, description: siteConfig.description, phone: '', whatsapp: '', instagram: '', zomato: siteConfig.integrations.zomato, swiggy: siteConfig.integrations.swiggy })
   const [contentSaving, setContentSaving] = useState(false)
-
-  useEffect(() => {
-    try {
-      const stored = localStorage.getItem(SESSION_KEY)
-      if (stored) setSession(JSON.parse(stored))
-      else router.replace('/admin/login')
-    } catch {}
-    setInitializing(false)
-  }, [router])
 
   useEffect(() => {
     try {
@@ -98,8 +87,6 @@ export default function AdminDashboard() {
 
   const logout = () => {
     localStorage.removeItem(SESSION_KEY)
-    setSession(null)
-    router.replace('/admin/login')
   }
 
   const updateOrderStatus = (orderId: string, status: OrderStatus) => {
@@ -249,16 +236,6 @@ export default function AdminDashboard() {
     ]
   }, [orders, menuItems, revenueStats])
 
-  if (!session && !initializing) {
-    return <div className="min-h-screen bg-muted/40" />
-  }
-
-  if (initializing) {
-    return <div className="min-h-screen bg-muted/40 flex items-center justify-center">
-      <div className="text-sm font-bold text-muted-foreground">Loading admin dashboard...</div>
-    </div>
-  }
-
   return (
     <Shell>
       <main className="min-h-screen bg-muted/40">
@@ -266,7 +243,7 @@ export default function AdminDashboard() {
           <div className="flex flex-col justify-between gap-5 sm:flex-row sm:items-center">
             <div>
               <p className="text-sm font-bold uppercase tracking-[.2em] text-primary">Admin dashboard</p>
-              <h1 className="mt-2 text-3xl font-black tracking-tight sm:text-4xl">Welcome, {session?.email}</h1>
+              <h1 className="mt-2 text-3xl font-black tracking-tight sm:text-4xl">Admin panel</h1>
               <p className="mt-2 max-w-xl text-sm text-muted-foreground">Manage orders, track revenue, and update your menu.</p>
             </div>
             <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
@@ -452,18 +429,13 @@ export default function AdminDashboard() {
           {tab === 'settings' && (
             <section className="mt-8 rounded-3xl border bg-card p-5 sm:p-8">
               <h2 className="text-2xl font-black">Settings</h2>
-              <p className="mt-1 text-sm text-muted-foreground">Manage restaurant details and admin access.</p>
+              <p className="mt-1 text-sm text-muted-foreground">Restaurant configuration and admin access.</p>
               <div className="mt-6 flex flex-col gap-4">
-                <div className="rounded-2xl border bg-background p-4">
-                  <p className="text-sm font-bold">Admin credentials</p>
-                  <p className="text-xs text-muted-foreground">Email: {ADMIN_EMAIL}</p>
-                  <p className="text-xs text-muted-foreground">Password: {ADMIN_PASSWORD}</p>
-                  <p className="mt-2 text-xs text-muted-foreground">Update these values in the code to change admin access.</p>
-                </div>
                 <div className="rounded-2xl border bg-background p-4">
                   <p className="text-sm font-bold">Restaurant info</p>
                   <p className="text-xs text-muted-foreground">Name: Meenu&apos;s Dosa</p>
                   <p className="text-xs text-muted-foreground">Type: South Indian restaurant</p>
+                  <p className="mt-2 text-xs text-muted-foreground">Admin access is managed by the backend authentication system.</p>
                 </div>
               </div>
             </section>
