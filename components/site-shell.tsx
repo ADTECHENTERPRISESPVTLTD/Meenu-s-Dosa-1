@@ -6,7 +6,7 @@ import { useState } from 'react'
 import { useTheme } from './theme-provider'
 import { siteConfig } from '@/lib/data'
 
-const navigation = [['Home','/'],['Menu','/menu'],['Our story','/about'],['Locations','/locations'],['Gallery','/gallery'],['Order online','/order'],['Contact','/contact'],['Admin','/admin']] as const
+const navigation = [['Home','/'],['Menu','/menu'],['Our story','/about'],['Locations','/locations'],['Gallery','/gallery'],['Order online','/order'],['Contact','/contact'],['Admin','/admin/login']] as const
 
 export function Header(){
   const [open,setOpen]=useState(false)
