@@ -1,13 +1,12 @@
-import { NextResponse } from 'next/server'
-import { store } from '@/lib/store'
+import { NextRequest, NextResponse } from 'next/server'
+import { contentController } from '@/lib/controllers/content.controller'
 
 export function GET() {
-  return NextResponse.json({ ok: true, content: store.get().content })
+  return NextResponse.json(contentController.get())
 }
 
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
   const body = await request.json().catch(() => ({}))
-  const s = store.get()
-  s.content = { ...s.content, ...body }
-  return NextResponse.json({ ok: true, content: s.content })
+  const result = await contentController.save(body)
+  return NextResponse.json(result)
 }

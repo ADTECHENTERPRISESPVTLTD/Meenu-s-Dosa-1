@@ -1,54 +1,24 @@
-import { NextResponse } from 'next/server'
-import { store, uuid, type Order, type OrderStatus, type PaymentMethod } from '@/lib/store'
+import { NextRequest, NextResponse } from 'next/server'
+import { orderController } from '@/lib/controllers/order.controller'
 
 export function GET() {
-  const s = store.get()
-  return NextResponse.json({ ok: true, orders: s.orders })
+  return NextResponse.json(orderController.list())
 }
 
-export async function PATCH(request: Request) {
+export async function POST(request: NextRequest) {
   const body = await request.json().catch(() => ({}))
-  const { id, status, paid } = body as { id?: string; status?: OrderStatus; paid?: boolean }
-  if (!id) return NextResponse.json({ ok: false, error: 'id required' }, { status: 400 })
-  const s = store.get()
-  const order = s.orders.find((o) => o.id === id)
-  if (!order) return NextResponse.json({ ok: false, error: 'not found' }, { status: 404 })
-  if (status !== undefined) order.status = status
-  if (paid !== undefined) order.paid = paid
-  return NextResponse.json({ ok: true, order })
+  const result = await orderController.create(body)
+  return NextResponse.json(result, { status: result.status || 200 })
 }
 
-export async function DELETE(request: Request) {
-  const { searchParams } = new URL(request.url)
-  const id = searchParams.get('id')
-  if (!id) return NextResponse.json({ ok: false, error: 'id required' }, { status: 400 })
-  const s = store.get()
-  s.orders = s.orders.filter((o) => o.id !== id)
-  return NextResponse.json({ ok: true })
-}
-
-export async function POST(request: Request) {
+export async function PATCH(request: NextRequest) {
   const body = await request.json().catch(() => ({}))
-  const { items, total, paymentMethod, source } = body as {
-    items?: { id: string; name: string; price: number; quantity: number }[]
-    total?: number
-    paymentMethod?: PaymentMethod
-    source?: 'direct' | 'zomato' | 'swiggy'
-  }
-  if (!items || !Array.isArray(items) || items.length === 0) {
-    return NextResponse.json({ ok: false, error: 'items required' }, { status: 400 })
-  }
-  const s = store.get()
-  const order: Order = {
-    id: uuid(),
-    date: Date.now(),
-    items,
-    total: total || 0,
-    paymentMethod: paymentMethod || 'cash',
-    source: source || 'direct',
-    status: 'pending',
-    paid: false,
-  }
-  s.orders.unshift(order)
-  return NextResponse.json({ ok: true, order })
+  const result = await orderController.update(body.id, body)
+  return NextResponse.json(result, { status: result.status || 200 })
+}
+
+export async function DELETE(request: NextRequest) {
+  const id = request.nextUrl.searchParams.get('id')
+  const result = await orderController.remove(id)
+  return NextResponse.json(result, { status: result.status || 200 })
 }

@@ -1,35 +1,18 @@
-import { NextResponse } from 'next/server'
-import { store, uuid } from '@/lib/store'
+import { NextRequest, NextResponse } from 'next/server'
+import { locationController } from '@/lib/controllers/location.controller'
 
 export function GET() {
-  return NextResponse.json({ ok: true, locations: store.get().locations })
+  return NextResponse.json(locationController.list())
 }
 
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
   const body = await request.json().catch(() => ({}))
-  const { name, address, phone, hours, mapsUrl, zomatoUrl, swiggyUrl } = body as Record<string, unknown>
-  if (!name || !address) return NextResponse.json({ ok: false, error: 'name and address required' }, { status: 400 })
-  const s = store.get()
-  const loc = {
-    id: uuid(),
-    name: String(name),
-    address: String(address),
-    phone: String(phone || ''),
-    hours: String(hours || ''),
-    mapsUrl: String(mapsUrl || ''),
-    zomatoUrl: String(zomatoUrl || ''),
-    swiggyUrl: String(swiggyUrl || ''),
-  }
-  s.locations.push(loc)
-  return NextResponse.json({ ok: true, location: loc })
+  const result = await locationController.create(body)
+  return NextResponse.json(result, { status: result.status || 200 })
 }
 
-export async function DELETE(request: Request) {
-  const { searchParams } = new URL(request.url)
-  const id = searchParams.get('id')
-  if (!id) return NextResponse.json({ ok: false, error: 'id required' }, { status: 400 })
-  const s = store.get()
-  const before = s.locations.length
-  s.locations = s.locations.filter((l) => l.id !== id)
-  return NextResponse.json({ ok: true, deleted: before - s.locations.length })
+export async function DELETE(request: NextRequest) {
+  const id = request.nextUrl.searchParams.get('id')
+  const result = await locationController.remove(id)
+  return NextResponse.json(result, { status: result.status || 200 })
 }
