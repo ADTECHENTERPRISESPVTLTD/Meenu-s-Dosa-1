@@ -1,8 +1,8 @@
-import { store, uuid, type Order, type OrderStatus, type PaymentMethod } from '../store'
+import { getStore, saveStore, uuid, type Order, type OrderStatus, type PaymentMethod } from '../store'
 
 export const orderController = {
   async list() {
-    return { ok: true, orders: store.get().orders }
+    return { ok: true, orders: getStore().orders }
   },
 
   async create(payload: {
@@ -14,6 +14,7 @@ export const orderController = {
     if (!payload.items || !Array.isArray(payload.items) || payload.items.length === 0) {
       return { ok: false, error: 'items required', status: 400 }
     }
+    const s = getStore()
     const order: Order = {
       id: uuid(),
       date: Date.now(),
@@ -24,24 +25,28 @@ export const orderController = {
       status: 'pending',
       paid: false,
     }
-    store.get().orders.unshift(order)
+    s.orders.unshift(order)
+    saveStore(s)
     return { ok: true, order, status: 201 }
   },
 
   async update(id: string, updates: { status?: OrderStatus; paid?: boolean }) {
     if (!id) return { ok: false, error: 'id required', status: 400 }
-    const order = store.get().orders.find((o) => o.id === id)
+    const s = getStore()
+    const order = s.orders.find((o) => o.id === id)
     if (!order) return { ok: false, error: 'not found', status: 404 }
     if (updates.status !== undefined) order.status = updates.status
     if (updates.paid !== undefined) order.paid = updates.paid
+    saveStore(s)
     return { ok: true, order }
   },
 
   async remove(id: string) {
     if (!id) return { ok: false, error: 'id required', status: 400 }
-    const s = store.get()
+    const s = getStore()
     const before = s.orders.length
     s.orders = s.orders.filter((o) => o.id !== id)
+    saveStore(s)
     return { ok: true, deleted: before - s.orders.length }
   },
 }

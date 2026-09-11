@@ -1,4 +1,5 @@
 import { menu, locations, categories, siteConfig, type MenuItem, type Category } from './data'
+import { readDb, writeDb } from './db-file'
 
 export type OrderStatus = 'pending' | 'confirmed' | 'preparing' | 'ready' | 'delivered' | 'cancelled'
 export type PaymentMethod = 'qr' | 'cash' | 'zomato' | 'swiggy'
@@ -57,15 +58,13 @@ export interface Content {
   swiggy: string
 }
 
-interface Store {
+export interface Store {
   menu: MenuItem[]
   orders: Order[]
   bookings: Booking[]
   locations: Location[]
   content: Content
 }
-
-const globalKey = Symbol.for('meenu-dosa-store')
 
 function createSeed(): Store {
   return {
@@ -86,21 +85,16 @@ function createSeed(): Store {
   }
 }
 
-declare global {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  var __MEENU_STORE__: Store | undefined
+export function getStore(): Store {
+  return readDb(createSeed)
 }
 
-function getStore(): Store {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const g = globalThis as any
-  if (!g[globalKey]) g[globalKey] = createSeed()
-  return g[globalKey]
+export function saveStore(store: Store): void {
+  writeDb(store)
 }
 
-export const store = {
-  get: (): Store => getStore(),
-  reset: () => { (globalThis as Record<string, unknown>)[String(globalKey)] = createSeed() },
+export function resetStore(): void {
+  writeDb(createSeed())
 }
 
 export function uuid() {

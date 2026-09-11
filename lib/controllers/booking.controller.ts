@@ -1,8 +1,8 @@
-import { store, uuid, type Booking } from '../store'
+import { getStore, saveStore, uuid, type Booking } from '../store'
 
 export const bookingController = {
   async list() {
-    return { ok: true, bookings: store.get().bookings }
+    return { ok: true, bookings: getStore().bookings }
   },
 
   async create(payload: {
@@ -18,6 +18,7 @@ export const bookingController = {
     if (!payload.name || !payload.phone || !payload.date || !payload.time) {
       return { ok: false, error: 'name, phone, date and time are required', status: 400 }
     }
+    const s = getStore()
     const booking: Booking = {
       id: uuid(),
       name: String(payload.name),
@@ -31,23 +32,27 @@ export const bookingController = {
       status: 'pending',
       createdAt: Date.now(),
     }
-    store.get().bookings.unshift(booking)
+    s.bookings.unshift(booking)
+    saveStore(s)
     return { ok: true, booking, status: 201 }
   },
 
   async update(id: string, status: string) {
     if (!id) return { ok: false, error: 'id required', status: 400 }
-    const booking = store.get().bookings.find((b) => b.id === id)
+    const s = getStore()
+    const booking = s.bookings.find((b) => b.id === id)
     if (!booking) return { ok: false, error: 'not found', status: 404 }
     if (status) booking.status = status as Booking['status']
+    saveStore(s)
     return { ok: true, booking }
   },
 
   async remove(id: string) {
     if (!id) return { ok: false, error: 'id required', status: 400 }
-    const s = store.get()
+    const s = getStore()
     const before = s.bookings.length
     s.bookings = s.bookings.filter((b) => b.id !== id)
+    saveStore(s)
     return { ok: true, deleted: before - s.bookings.length }
   },
 }
