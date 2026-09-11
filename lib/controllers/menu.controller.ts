@@ -1,5 +1,4 @@
-import { getStore, saveStore, uuid, type MenuItem, mongoInsertOne, mongoUpdateOne, mongoDeleteOne, mongoGet } from '../store'
-import { isMongoAvailable } from '../mongo'
+import { getStore, saveStore, uuid, type MenuItem } from '../store'
 
 export const menuController = {
   async list(category?: string | null) {
@@ -23,10 +22,6 @@ export const menuController = {
       vegetarian: payload.vegetarian !== false,
       image: String(payload.image || ''),
     }
-    if (isMongoAvailable()) {
-      const inserted = await mongoInsertOne('menu', item)
-      if (inserted) return { ok: true, item, status: 201 }
-    }
     const s = await getStore()
     s.menu.unshift(item)
     await saveStore(s)
@@ -35,14 +30,6 @@ export const menuController = {
 
   async update(id: string, updates: Partial<MenuItem>) {
     if (!id) return { ok: false, error: 'id required', status: 400 }
-    if (isMongoAvailable()) {
-      const updated = await mongoUpdateOne('menu', id, updates)
-      if (updated) {
-        const items = await mongoGet<MenuItem>('menu')
-        const item = items.find((m) => m.id === id)
-        return { ok: true, item }
-      }
-    }
     const s = await getStore()
     const item = s.menu.find((m) => m.id === id)
     if (!item) return { ok: false, error: 'not found', status: 404 }
@@ -53,10 +40,6 @@ export const menuController = {
 
   async remove(id: string) {
     if (!id) return { ok: false, error: 'id required', status: 400 }
-    if (isMongoAvailable()) {
-      const deleted = await mongoDeleteOne('menu', id)
-      if (deleted) return { ok: true, deleted: 1 }
-    }
     const s = await getStore()
     const before = s.menu.length
     s.menu = s.menu.filter((m) => m.id !== id)
