@@ -1,0 +1,10 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+const express_1 = require("express");
+const locationcontroller_1 = require("../controllers/locationcontroller");
+const validators_1 = require("../validators/validators");
+const validate_1 = require("../middleware/validate");
+const router = (0, express_1.Router)();
+router.get('/', locationcontroller_1.listLocations);
+router.get('/:id', (0, validators_1.mongoIdParamValidator)(), validate_1.handleValidation, locationcontroller_1.getLocation);
+exports.default = router;
