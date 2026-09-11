@@ -1,14 +1,15 @@
 'use client'
 
 import { useMemo, useState, useEffect } from 'react'
-import { ArrowUpRight, ShoppingBag, Trash2, Star, Clock, Bike } from 'lucide-react'
+import { ArrowUpRight, ShoppingBag, Trash2, Star, Clock, Bike, MapPin } from 'lucide-react'
 import { Shell } from '@/components/site-shell'
-import { formatPrice, menu, type MenuItem } from '@/lib/data'
+import { formatPrice, menu, type MenuItem, locations, siteConfig } from '@/lib/data'
 
 const CART_STORAGE_KEY = 'meenu-dosa-cart'
 
 export default function Order() {
   const [cart, setCart] = useState<Record<string, number>>({})
+  const [branch, setBranch] = useState(locations[0].id)
 
   useEffect(() => {
     try {
@@ -28,18 +29,66 @@ export default function Order() {
   const cartCount = Object.values(cart).reduce((sum, count) => sum + count, 0)
   const cartTotal = useMemo(() => cartItems.reduce((sum, item) => sum + (item.price || 0) * item.quantity, 0), [cartItems])
 
+  const selected = locations.find((l) => l.id === branch) ?? locations[0]
+
+  const platforms = [
+    {
+      key: 'zomato',
+      label: 'Zomato',
+      color: 'red',
+      href: selected.zomatoUrl,
+      rating: '4.2',
+      time: '25-30 mins',
+      delivery: 'Free delivery',
+    },
+    {
+      key: 'swiggy',
+      label: 'Swiggy',
+      color: 'orange',
+      href: selected.swiggyUrl,
+      rating: '4.3',
+      time: '20-28 mins',
+      delivery: '₹0 delivery',
+    },
+  ]
+
   return (
     <Shell>
       <div className="mx-auto max-w-5xl px-4 py-12 sm:px-6 md:py-20">
         <p className="text-sm font-bold uppercase tracking-[.2em] text-primary">Order online</p>
-        <h1 className="mt-3 text-5xl font-black tracking-tight sm:text-7xl">Your favourites, your way.</h1>
+        <h1 className="mt-3 text-4xl font-black tracking-tight sm:text-5xl md:text-6xl">Your favourites, your way.</h1>
+
+        {/* Branch selector */}
+        <div className="mt-6">
+          <p className="mb-2 text-xs font-bold uppercase tracking-[.2em] text-muted-foreground">Choose your outlet</p>
+          <div className="flex flex-wrap gap-3">
+            {locations.map((loc) => (
+              <button
+                key={loc.id}
+                type="button"
+                onClick={() => setBranch(loc.id)}
+                className={`inline-flex items-center gap-2 rounded-full border px-4 py-2.5 text-sm font-bold transition ${
+                  branch === loc.id
+                    ? 'border-primary bg-primary text-white'
+                    : 'border-border bg-card text-foreground hover:border-primary/60'
+                }`}
+              >
+                <MapPin size={16} />
+                {loc.name.replace("Meenu's Dosa — ", '')}
+              </button>
+            ))}
+          </div>
+          <p className="mt-3 text-sm text-muted-foreground">
+            Ordering from <span className="font-bold text-foreground">{selected.name}</span>. Delivery links below update automatically.
+          </p>
+        </div>
 
         {cartCount > 0 ? (
           <>
             <p className="mt-5 max-w-xl text-muted-foreground">
               Review your order below, then choose a delivery partner to complete your order on their platform.
             </p>
-            <section className="mt-10 rounded-3xl border bg-card p-5 sm:p-8">
+            <section className="mt-8 rounded-3xl border bg-card p-5 sm:p-8">
               <div className="flex items-center justify-between">
                 <h2 className="text-2xl font-black">Your order</h2>
                 <button type="button" onClick={clearCart} className="inline-flex items-center gap-2 rounded-full border px-4 py-2 text-sm font-semibold text-destructive">
@@ -74,63 +123,37 @@ export default function Order() {
         )}
 
         <div className="mt-10 grid gap-6 sm:grid-cols-2">
-          <a
-            href="https://www.zomato.com/ncr/meenu-s-dosa"
-            target="_blank"
-            rel="noreferrer noopener"
-            className="group relative overflow-hidden rounded-3xl border bg-card transition hover:border-red-500"
-          >
-            <div className="absolute inset-x-0 top-0 h-24 bg-gradient-to-b from-black/20 to-transparent" />
-            <div className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-xs font-bold uppercase tracking-[.2em] text-red-500">Order on</p>
-                  <h2 className="mt-1 text-3xl font-black">Zomato</h2>
+          {platforms.map((p) => (
+            <a
+              key={p.key}
+              href={p.href}
+              target="_blank"
+              rel="noreferrer noopener"
+              className="group relative overflow-hidden rounded-3xl border bg-card transition hover:border-red-500"
+            >
+              <div className="absolute inset-x-0 top-0 h-24 bg-gradient-to-b from-black/20 to-transparent" />
+              <div className="p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-xs font-bold uppercase tracking-[.2em] text-red-500">Order on</p>
+                    <h2 className="mt-1 text-3xl font-black">{p.label}</h2>
+                  </div>
+                  <div className="grid size-12 place-items-center rounded-full border bg-white text-red-500">
+                    <span className="text-lg font-black">{p.label[0]}</span>
+                  </div>
                 </div>
-                <div className="grid size-12 place-items-center rounded-full border bg-white text-red-500">
-                  <span className="text-lg font-black">Z</span>
+                <p className="mt-3 text-sm text-muted-foreground">{selected.name} · South Indian</p>
+                <div className="mt-4 flex flex-wrap items-center gap-4 text-xs text-muted-foreground">
+                  <span className="inline-flex items-center gap-1"><Star size={14} className="fill-yellow-500 text-yellow-500" /> {p.rating}</span>
+                  <span className="inline-flex items-center gap-1"><Clock size={14} /> {p.time}</span>
+                  <span className="inline-flex items-center gap-1"><Bike size={14} /> {p.delivery}</span>
                 </div>
+                <button type="button" className="mt-5 w-full rounded-full bg-red-500 px-4 py-3 text-sm font-bold text-white transition group-hover:bg-red-600">
+                  Order on {p.label} <ArrowUpRight className="ml-1 inline transition group-hover:translate-x-1" size={16} />
+                </button>
               </div>
-              <p className="mt-3 text-sm text-muted-foreground">Meenu&apos;s Dosa · South Indian</p>
-              <div className="mt-4 flex flex-wrap items-center gap-4 text-xs text-muted-foreground">
-                <span className="inline-flex items-center gap-1"><Star size={14} className="fill-yellow-500 text-yellow-500" /> 4.2</span>
-                <span className="inline-flex items-center gap-1"><Clock size={14} /> 25-30 mins</span>
-                <span className="inline-flex items-center gap-1"><Bike size={14} /> Free delivery</span>
-              </div>
-              <button type="button" className="mt-5 w-full rounded-full bg-red-500 px-4 py-3 text-sm font-bold text-white transition group-hover:bg-red-600">
-                Order on Zomato <ArrowUpRight className="ml-1 inline transition group-hover:translate-x-1" size={16} />
-              </button>
-            </div>
-          </a>
-
-          <a
-            href="https://www.swiggy.com/search?q=meenu%20dosa"
-            target="_blank"
-            rel="noreferrer noopener"
-            className="group relative overflow-hidden rounded-3xl border bg-card transition hover:border-orange-500"
-          >
-            <div className="absolute inset-x-0 top-0 h-24 bg-gradient-to-b from-black/20 to-transparent" />
-            <div className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-xs font-bold uppercase tracking-[.2em] text-orange-500">Order on</p>
-                  <h2 className="mt-1 text-3xl font-black">Swiggy</h2>
-                </div>
-                <div className="grid size-12 place-items-center rounded-full border bg-white text-orange-500">
-                  <span className="text-lg font-black">S</span>
-                </div>
-              </div>
-              <p className="mt-3 text-sm text-muted-foreground">Meenu&apos;s Dosa · South Indian</p>
-              <div className="mt-4 flex flex-wrap items-center gap-4 text-xs text-muted-foreground">
-                <span className="inline-flex items-center gap-1"><Star size={14} className="fill-yellow-500 text-yellow-500" /> 4.3</span>
-                <span className="inline-flex items-center gap-1"><Clock size={14} /> 20-28 mins</span>
-                <span className="inline-flex items-center gap-1"><Bike size={14} /> ₹0 delivery</span>
-              </div>
-              <button type="button" className="mt-5 w-full rounded-full bg-orange-500 px-4 py-3 text-sm font-bold text-white transition group-hover:bg-orange-600">
-                Order on Swiggy <ArrowUpRight className="ml-1 inline transition group-hover:translate-x-1" size={16} />
-              </button>
-            </div>
-          </a>
+            </a>
+          ))}
         </div>
       </div>
     </Shell>

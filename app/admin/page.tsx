@@ -3,8 +3,8 @@
 import { useMemo, useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { LogOut, Pencil, Plus, Trash2, X, Calendar, MapPin, Globe } from 'lucide-react'
-import { menu as initialMenu, categories, formatPrice, siteConfig, type MenuItem } from '@/lib/data'
+import { LogOut, Pencil, Plus, Trash2, X, Calendar, MapPin, Globe, LayoutDashboard, ShoppingBag, BookUser, Map, FileText, Settings, ShieldCheck, TrendingUp, DollarSign, Package, Clock, ChevronRight, Image } from 'lucide-react'
+import { menu as initialMenu, categories, formatPrice, siteConfig, type MenuItem, categoryImage } from '@/lib/data'
 import { Shell } from '@/components/site-shell'
 
 const ADMIN_EMAIL = ''
@@ -240,51 +240,123 @@ export default function AdminDashboard() {
     <Shell>
       <main className="min-h-screen bg-muted/40">
         <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6">
-          <div className="flex flex-col justify-between gap-5 sm:flex-row sm:items-center">
-            <div>
-              <p className="text-sm font-bold uppercase tracking-[.2em] text-primary">Admin dashboard</p>
-              <h1 className="mt-2 text-3xl font-black tracking-tight sm:text-4xl">Admin panel</h1>
-              <p className="mt-2 max-w-xl text-sm text-muted-foreground">Manage orders, track revenue, and update your menu.</p>
-            </div>
-            <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-              <Link href="/" className="text-sm font-bold underline underline-offset-4">View website</Link>
-              <button onClick={logout} className="inline-flex items-center justify-center gap-2 rounded-full border px-4 py-2 text-sm font-bold">
-                <LogOut size={16}/> Logout
-              </button>
-            </div>
-          </div>
-
-          <nav className="mt-8 flex gap-2 overflow-x-auto border-b pb-3 -mx-4 px-4 sm:mx-0 sm:px-0">
-            {([
-              ['dashboard', 'Dashboard'],
-              ['orders', 'Orders'],
-              ['bookings', 'Bookings'],
-              ['menu', 'Menu'],
-              ['locations', 'Locations'],
-              ['content', 'Content'],
-              ['settings', 'Settings'],
-            ] as const).map(([key, label]) => (
-              <button
-                key={key}
-                onClick={() => setTab(key)}
-                className={`whitespace-nowrap rounded-full px-4 py-2 text-sm font-bold transition ${tab === key ? 'bg-primary text-primary-foreground' : 'hover:bg-muted'}`}
-              >
-                {label}
-              </button>
-            ))}
-          </nav>
-
-          {tab === 'dashboard' && (
-            <section className="mt-8 grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
-              {stats.map((stat) => (
-                <div key={stat.label} className="rounded-2xl border bg-card p-5">
-                  <p className="text-sm text-muted-foreground">{stat.label}</p>
-                  <p className="mt-2 text-3xl font-black">{stat.value}</p>
-                  <p className="mt-1 text-xs text-muted-foreground">{stat.change}</p>
+          <div className="grid gap-6 lg:grid-cols-[260px_1fr]">
+            {/* Sidebar */}
+            <aside className="space-y-6">
+              <div className="rounded-3xl border bg-card p-5">
+                <div className="flex items-center gap-3">
+                  <div className="grid size-12 place-items-center rounded-2xl bg-gradient-to-br from-primary to-orange-500 text-xl font-black text-white shadow-lg">M</div>
+                  <div className="min-w-0">
+                    <p className="truncate font-black">{siteConfig.name}</p>
+                    <p className="text-xs text-muted-foreground">Admin control panel</p>
+                  </div>
                 </div>
-              ))}
-            </section>
-          )}
+                <div className="mt-4 grid grid-cols-2 gap-2">
+                  <div className="rounded-2xl bg-primary/10 p-3 text-center">
+                    <p className="text-lg font-black text-primary">{revenueStats.totalOrders}</p>
+                    <p className="text-[10px] font-bold uppercase tracking-wide text-muted-foreground">Orders</p>
+                  </div>
+                  <div className="rounded-2xl bg-primary/10 p-3 text-center">
+                    <p className="text-lg font-black text-primary">{formatPrice(revenueStats.collectedRevenue)}</p>
+                    <p className="text-[10px] font-bold uppercase tracking-wide text-muted-foreground">Collected</p>
+                  </div>
+                </div>
+              </div>
+
+              <nav className="flex flex-col gap-1">
+                {([
+                  ['dashboard', LayoutDashboard, 'Dashboard'],
+                  ['orders', ShoppingBag, 'Orders'],
+                  ['bookings', BookUser, 'Bookings'],
+                  ['menu', Image, 'Menu'],
+                  ['locations', Map, 'Locations'],
+                  ['content', FileText, 'Content'],
+                  ['settings', Settings, 'Settings'],
+                ] as const).map(([key, Icon, label]) => (
+                  <button
+                    key={key}
+                    onClick={() => setTab(key)}
+                    className={`group flex items-center gap-3 rounded-2xl px-4 py-3 text-left text-sm font-bold transition ${
+                      tab === key
+                        ? 'bg-primary text-primary-foreground shadow-lg shadow-primary/25'
+                        : 'hover:bg-muted'
+                    }`}
+                  >
+                    <Icon size={18} className={tab === key ? 'text-primary-foreground' : 'text-muted-foreground group-hover:text-foreground'} />
+                    <span className="flex-1">{label}</span>
+                    {key === 'orders' && revenueStats.unpaidOrders > 0 && (
+                      <span className="grid size-6 place-items-center rounded-full bg-amber-500 text-[10px] font-black text-white">
+                        {revenueStats.unpaidOrders}
+                      </span>
+                    )}
+                    <ChevronRight size={16} className={tab === key ? 'text-primary-foreground/70' : 'text-muted-foreground'} />
+                  </button>
+                ))}
+              </nav>
+
+              <div className="rounded-3xl border bg-card p-5">
+                <p className="text-xs font-bold uppercase tracking-[.15em] text-muted-foreground">Quick actions</p>
+                <div className="mt-3 flex flex-col gap-2">
+                  <Link href="/" className="inline-flex items-center gap-2 rounded-xl border px-3 py-2 text-sm font-bold hover:bg-muted">
+                    <Globe size={14} /> View website
+                  </Link>
+                  <button onClick={logout} className="inline-flex items-center gap-2 rounded-xl border px-3 py-2 text-sm font-bold text-destructive hover:bg-destructive/10">
+                    <LogOut size={14} /> Logout
+                  </button>
+                </div>
+              </div>
+            </aside>
+
+            {/* Main content */}
+            <div className="min-w-0">
+              <div className="mb-6">
+                <p className="text-sm font-bold uppercase tracking-[.2em] text-primary">Admin dashboard</p>
+                <h1 className="mt-2 text-3xl font-black tracking-tight sm:text-4xl">
+                  {tab === 'dashboard' && 'Dashboard'}
+                  {tab === 'orders' && 'Order management'}
+                  {tab === 'bookings' && 'Booking management'}
+                  {tab === 'menu' && 'Menu management'}
+                  {tab === 'locations' && 'Location management'}
+                  {tab === 'content' && 'Content management'}
+                  {tab === 'settings' && 'Settings'}
+                </h1>
+                <p className="mt-2 max-w-xl text-sm text-muted-foreground">
+                  {tab === 'dashboard' && 'Track revenue, orders, and menu performance at a glance.'}
+                  {tab === 'orders' && 'Track, update status, and manage all orders.'}
+                  {tab === 'bookings' && 'View and manage table reservations.'}
+                  {tab === 'menu' && 'Add, edit, delete and toggle availability.'}
+                  {tab === 'locations' && 'Add and manage restaurant locations.'}
+                  {tab === 'content' && 'Update website content and social links.'}
+                  {tab === 'settings' && 'Restaurant configuration and admin access.'}
+                </p>
+              </div>
+
+              {tab === 'dashboard' && (
+                <section className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
+                  {stats.map((stat, idx) => {
+                    const gradients = [
+                      'from-primary to-orange-500',
+                      'from-emerald-500 to-teal-500',
+                      'from-blue-500 to-indigo-500',
+                      'from-amber-500 to-yellow-500',
+                      'from-rose-500 to-pink-500',
+                      'from-violet-500 to-purple-500',
+                      'from-cyan-500 to-sky-500',
+                      'from-fuchsia-500 to-pink-500',
+                    ]
+                    return (
+                      <div key={stat.label} className="group relative overflow-hidden rounded-3xl border bg-card p-5">
+                        <div className={`absolute inset-0 bg-gradient-to-br ${gradients[idx % gradients.length]} opacity-[0.08]`} />
+                        <p className="text-sm font-semibold text-muted-foreground">{stat.label}</p>
+                        <p className="mt-2 text-3xl font-black">{stat.value}</p>
+                        <div className="mt-3 inline-flex items-center gap-1.5 rounded-full bg-muted px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-muted-foreground">
+                          <TrendingUp size={12} /> {stat.change}
+                        </div>
+                      </div>
+                    )
+                  })}
+                </section>
+              )}
 
           {tab === 'orders' && (
             <section className="mt-8 rounded-3xl border bg-card p-5 sm:p-8">
@@ -389,39 +461,32 @@ export default function AdminDashboard() {
                   <option value="all">All categories</option>
                   {categories.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
                 </select>
-              </div>
-              <div className="mt-6 overflow-x-auto -mx-5 px-5 sm:mx-0 sm:px-0">
-                <table className="w-full min-w-[700px] text-left text-sm">
-                  <thead className="border-b text-muted-foreground">
-                    <tr>
-                      <th className="pb-3">Dish</th>
-                      <th className="pb-3">Category</th>
-                      <th className="pb-3">Price</th>
-                      <th className="pb-3">Availability</th>
-                      <th className="pb-3">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {menuItems.filter((item) => menuCategoryFilter === 'all' || item.category === menuCategoryFilter).slice(0, 12).map((item) => (
-                      <tr key={item.id} className="border-b last:border-0">
-                        <td className="py-4 font-semibold">{item.name}</td>
-                        <td className="py-4 text-muted-foreground">{item.category}</td>
-                        <td className="py-4">₹{item.price}</td>
-                        <td className="py-4">
-                          <button type="button" onClick={() => setMenuItems((current) => current.map((entry) => entry.id === item.id ? { ...entry, available: !entry.available } : entry))} className={`rounded-full px-3 py-1 text-xs font-bold ${item.available ? 'bg-primary/15 text-primary' : 'bg-muted text-muted-foreground'}`}>
-                            {item.available ? 'Available' : 'Unavailable'}
-                          </button>
-                        </td>
-                        <td className="py-4">
-                          <div className="flex gap-2">
-                            <button onClick={() => { setEditing(item); setForm({ name: item.name, category: item.category, price: String(item.price) }); setShowForm(true) }} className="rounded-lg border p-2"><Pencil size={15}/></button>
-                            <button onClick={() => deleteItem(item)} className="rounded-lg border p-2 text-destructive"><Trash2 size={15}/></button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+</div>
+              <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                {menuItems.filter((item) => menuCategoryFilter === 'all' || item.category === menuCategoryFilter).slice(0, 12).map((item) => (
+                  <div key={item.id} className="overflow-hidden rounded-2xl border bg-card">
+                    <div className="relative aspect-[4/3] overflow-hidden bg-muted">
+                      <img src={categoryImage(item.image)} alt={item.name} className="h-full w-full object-cover" />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+                      <div className="absolute left-3 top-3">
+                        <span className={`rounded-full px-3 py-1 text-xs font-bold ${item.available ? 'bg-primary/90 text-primary-foreground' : 'bg-muted text-muted-foreground'}`}>
+                          {item.available ? 'Available' : 'Unavailable'}
+                        </span>
+                      </div>
+                    </div>
+                    <div className="p-4">
+                      <p className="font-black">{item.name}</p>
+                      <p className="mt-0.5 text-xs text-muted-foreground">{item.category}</p>
+                      <div className="mt-3 flex items-center justify-between">
+                        <p className="text-lg font-black text-primary">₹{item.price}</p>
+                        <div className="flex gap-2">
+                          <button onClick={() => { setEditing(item); setForm({ name: item.name, category: item.category, price: String(item.price) }); setShowForm(true) }} className="rounded-lg border p-2 hover:bg-muted"><Pencil size={15}/></button>
+                          <button onClick={() => deleteItem(item)} className="rounded-lg border p-2 text-destructive hover:bg-destructive/10"><Trash2 size={15}/></button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
               </div>
             </section>
           )}
@@ -551,7 +616,9 @@ export default function AdminDashboard() {
             </section>
           )}
         </div>
-      </main>
-    </Shell>
+      </div>
+    </div>
+  </main>
+  </Shell>
   )
 }

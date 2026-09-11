@@ -78,9 +78,9 @@ export default function MenuPage() {
   return <Shell>
     <main className="mx-auto max-w-7xl px-4 py-12 sm:px-6 md:py-20">
       <p className="text-sm font-bold uppercase tracking-[.2em] text-primary">The menu</p>
-      <div className="mt-3 flex flex-col justify-between gap-6 lg:flex-row lg:items-end">
+      <div className="mt-3 flex flex-col gap-6 lg:flex-row lg:items-end">
         <div>
-          <h1 className="max-w-2xl text-5xl font-black tracking-tight sm:text-7xl">Made fresh, <span className="text-primary">worth sharing.</span></h1>
+          <h1 className="max-w-2xl text-3xl font-black tracking-tight sm:text-5xl md:text-6xl">Made fresh, <span className="text-primary">worth sharing.</span></h1>
           <p className="mt-5 max-w-xl text-muted-foreground">Browse the full menu and build your order list with simple add, remove and quantity controls.</p>
         </div>
         {cartCount > 0 && <div className="flex items-center gap-3 rounded-2xl border bg-card p-3 shadow-sm">
@@ -88,7 +88,7 @@ export default function MenuPage() {
             <ShoppingBag className="size-5 text-primary"/>
             <span className="text-sm font-bold">{cartCount} items · {formatPrice(cartTotal)}</span>
           </button>
-          <button type="button" onClick={() => setOpen(true)} className="rounded-full bg-primary px-4 py-2 text-sm font-bold text-primary-foreground">Review order</button>
+          <button type="button" onClick={() => setOpen(true)} className="rounded-full bg-primary px-4 py-2.5 text-sm font-bold text-primary-foreground">Review order</button>
         </div>}
       </div>
       <div className="mt-8 flex flex-col gap-3 sm:flex-row">
@@ -101,8 +101,8 @@ export default function MenuPage() {
       </div>
       <div className="sticky top-16 z-20 -mx-4 mt-8 overflow-x-auto border-y bg-background/95 px-4 py-3 backdrop-blur sm:mx-0 sm:rounded-full sm:border">
         <div className="flex min-w-max gap-2">
-          <button type="button" onClick={() => setCategory('all')} className={`rounded-full border px-4 py-2 text-sm font-semibold ${category === 'all' ? 'border-primary bg-primary text-primary-foreground' : ''}`}>All</button>
-          {categories.map(c => <button type="button" key={c.id} onClick={() => setCategory(c.id)} className={`rounded-full border px-4 py-2 text-sm font-semibold ${category === c.id ? 'border-primary bg-primary text-primary-foreground' : ''}`}>{c.name}</button>)}
+          <button type="button" onClick={() => setCategory('all')} className={`rounded-full border px-4 py-2.5 text-sm font-semibold ${category === 'all' ? 'border-primary bg-primary text-primary-foreground' : ''}`}>All</button>
+          {categories.map(c => <button type="button" key={c.id} onClick={() => setCategory(c.id)} className={`rounded-full border px-4 py-2.5 text-sm font-semibold ${category === c.id ? 'border-primary bg-primary text-primary-foreground' : ''}`}>{c.name}</button>)}
         </div>
       </div>
       <div className="mt-12 flex flex-col gap-16">
@@ -127,10 +127,10 @@ export default function MenuPage() {
                   <p className="mt-1 text-xs text-muted-foreground">{item.vegetarian ? 'Vegetarian · ' : ''}{item.available ? 'Available' : 'Currently unavailable'}</p>
                   <div className="mt-4 flex items-center gap-3">
                     <p className="font-black text-primary">{formatPrice(item.price)}</p>
-                    {count === 0 ? <button type="button" onClick={() => updateCart(item, 1)} className="inline-flex items-center gap-1 rounded-full border px-3 py-1.5 text-xs font-bold hover:border-primary"><Plus size={14}/> Add</button> : <div className="flex items-center gap-2 rounded-full border px-1 py-1">
-                      <button type="button" onClick={() => updateCart(item, -1)} aria-label={`Remove one ${item.name}`} className="grid size-7 place-items-center rounded-full hover:bg-muted"><Minus size={14}/></button>
+                    {count === 0 ? <button type="button" onClick={() => updateCart(item, 1)} className="inline-flex items-center gap-1 rounded-full border px-3 py-2 text-xs font-bold hover:border-primary"><Plus size={14}/> Add</button> : <div className="flex items-center gap-2 rounded-full border px-1 py-1">
+                      <button type="button" onClick={() => updateCart(item, -1)} aria-label={`Remove one ${item.name}`} className="grid size-8 place-items-center rounded-full hover:bg-muted"><Minus size={14}/></button>
                       <span className="min-w-5 text-center text-sm font-bold">{count}</span>
-                      <button type="button" onClick={() => updateCart(item, 1)} aria-label={`Add one ${item.name}`} className="grid size-7 place-items-center rounded-full hover:bg-muted"><Plus size={14}/></button>
+                      <button type="button" onClick={() => updateCart(item, 1)} aria-label={`Add one ${item.name}`} className="grid size-8 place-items-center rounded-full hover:bg-muted"><Plus size={14}/></button>
                     </div>}
                   </div>
                 </div>
@@ -150,10 +150,10 @@ export default function MenuPage() {
               </button>
               <div className="flex items-center gap-2">
                 <button type="button" onClick={() => { setCart({}); setOpen(false); setPaymentMethod(null) }} className="rounded-full border p-2 text-destructive"><Trash2 size={16}/></button>
-                <button type="button" onClick={() => { setOpen((current) => !current); setPaymentMethod(null) }} className="rounded-full bg-primary px-4 py-2 text-sm font-bold text-primary-foreground">{open ? 'Close' : 'Checkout'}</button>
+                <button type="button" onClick={() => { setOpen((current) => !current); setPaymentMethod(null) }} className="rounded-full bg-primary px-4 py-2.5 text-sm font-bold text-primary-foreground">{open ? 'Close' : 'Checkout'}</button>
               </div>
             </div>
-            {open && <div className="max-h-[60vh] overflow-y-auto px-5 py-4">
+            {open && <div className="max-h-[75vh] overflow-y-auto px-5 py-4">
               <ul className="divide-y">
                 {cartItems.map((item) => (
                   <li key={item.id} className="flex items-start justify-between gap-4 py-3">
@@ -164,9 +164,9 @@ export default function MenuPage() {
                     <div className="flex items-center gap-3">
                       <p className="font-black text-primary">{formatPrice((item.price || 0) * item.quantity)}</p>
                       <div className="flex items-center gap-1 rounded-full border">
-                        <button type="button" onClick={() => updateCart(item, -1)} className="grid size-7 place-items-center rounded-full hover:bg-muted"><Minus size={14}/></button>
+                        <button type="button" onClick={() => updateCart(item, -1)} className="grid size-8 place-items-center rounded-full hover:bg-muted"><Minus size={14}/></button>
                         <span className="min-w-5 text-center text-sm font-bold">{item.quantity}</span>
-                        <button type="button" onClick={() => updateCart(item, 1)} className="grid size-7 place-items-center rounded-full hover:bg-muted"><Plus size={14}/></button>
+                        <button type="button" onClick={() => updateCart(item, 1)} className="grid size-8 place-items-center rounded-full hover:bg-muted"><Plus size={14}/></button>
                       </div>
                     </div>
                   </li>
@@ -177,7 +177,7 @@ export default function MenuPage() {
                 <p className="text-lg font-black text-primary">{formatPrice(cartTotal)}</p>
               </div>
               {!paymentMethod ? (
-                <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                <div className="mt-4 grid grid-cols-2 gap-3">
                   <button type="button" onClick={() => { setPaymentMethod('zomato'); saveOrder('zomato') }} className="flex flex-col items-center gap-2 rounded-2xl border bg-background p-4 transition hover:border-red-500">
                     <span className="text-lg font-black text-red-500">Zomato</span>
                     <span className="text-xs text-muted-foreground">Order via Zomato</span>
@@ -204,7 +204,7 @@ export default function MenuPage() {
                       <p className="text-sm font-bold">Redirecting to {paymentMethod === 'zomato' ? 'Zomato' : 'Swiggy'}...</p>
                       <p className="text-xs text-muted-foreground">Complete your order on {paymentMethod === 'zomato' ? 'Zomato' : 'Swiggy'} platform.</p>
                       {lastOrderId && <p className="text-xs text-muted-foreground">Order ID: {lastOrderId}</p>}
-                      <a href={paymentMethod === 'zomato' ? 'https://www.zomato.com/ncr/meenu-s-dosa' : 'https://www.swiggy.com/search?q=meenu%20dosa'} target="_blank" rel="noreferrer noopener" className="rounded-full bg-primary px-4 py-2 text-sm font-bold text-primary-foreground">Open {paymentMethod === 'zomato' ? 'Zomato' : 'Swiggy'}</a>
+                      <a href={paymentMethod === 'zomato' ? 'https://www.zomato.com/ncr/meenu-s-dosa' : 'https://www.swiggy.com/search?q=meenu%20dosa'} target="_blank" rel="noreferrer noopener" className="rounded-full bg-primary px-4 py-2.5 text-sm font-bold text-primary-foreground">Open {paymentMethod === 'zomato' ? 'Zomato' : 'Swiggy'}</a>
                       <button type="button" onClick={clearCart} className="rounded-full border px-4 py-2 text-xs font-semibold">Close</button>
                     </div>
                   )}
@@ -216,7 +216,7 @@ export default function MenuPage() {
                       </div>
                       <p className="text-xs text-muted-foreground">Show this QR at the counter or scan with any UPI app.</p>
                       <p className="text-lg font-black text-primary">{formatPrice(cartTotal)}</p>
-                      <button type="button" onClick={() => saveOrder('qr')} className="rounded-full bg-primary px-4 py-2 text-sm font-bold text-primary-foreground">Confirm QR payment</button>
+                      <button type="button" onClick={() => saveOrder('qr')} className="rounded-full bg-primary px-4 py-2.5 text-sm font-bold text-primary-foreground">Confirm QR payment</button>
                       <button type="button" onClick={() => { setPaymentMethod(null) }} className="rounded-full border px-4 py-2 text-xs font-semibold">Back</button>
                     </div>
                   )}
@@ -225,7 +225,7 @@ export default function MenuPage() {
                       <p className="text-sm font-bold">Cash payment</p>
                       <p className="text-xs text-muted-foreground">Please pay at the counter when you receive your order.</p>
                       <p className="text-lg font-black text-primary">{formatPrice(cartTotal)}</p>
-                      <button type="button" onClick={() => { saveOrder('cash'); setPaymentMethod(null); setOpen(false) }} className="rounded-full bg-primary px-4 py-2 text-sm font-bold text-primary-foreground">Confirm cash order</button>
+                      <button type="button" onClick={() => { saveOrder('cash'); setPaymentMethod(null); setOpen(false) }} className="rounded-full bg-primary px-4 py-2.5 text-sm font-bold text-primary-foreground">Confirm cash order</button>
                       <button type="button" onClick={() => { setPaymentMethod(null) }} className="rounded-full border px-4 py-2 text-xs font-semibold">Back</button>
                     </div>
                   )}

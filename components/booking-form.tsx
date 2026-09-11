@@ -1,9 +1,19 @@
 'use client'
 
 import { useState, type FormEvent } from 'react'
-import { bookingService } from '@/lib/data'
+import { MapPin, Clock, Users, Utensils } from 'lucide-react'
+import { bookingService, locations } from '@/lib/data'
 
 type BookingState = 'idle' | 'loading' | 'success' | 'error'
+
+const timeSlots = [
+  '12:00 PM (Lunch)',
+  '01:00 PM (Lunch)',
+  '07:30 PM (Dinner)',
+  '08:00 PM (Dinner)',
+  '08:30 PM (Dinner)',
+  '09:00 PM (Dinner)',
+]
 
 export function BookingForm() {
   const [state, setState] = useState<BookingState>('idle')
@@ -11,8 +21,10 @@ export function BookingForm() {
   const [formData, setFormData] = useState({
     name: '',
     phone: '',
+    email: '',
+    outlet: locations[0].id,
     date: '',
-    time: '',
+    time: timeSlots[2],
     guests: '2',
     message: '',
   })
@@ -45,7 +57,7 @@ export function BookingForm() {
       })
       if (result.ok) {
         setState('success')
-        setFormData({ name: '', phone: '', date: '', time: '', guests: '2', message: '' })
+        setFormData({ name: '', phone: '', email: '', outlet: locations[0].id, date: '', time: timeSlots[2], guests: '2', message: '' })
       } else {
         setErrors({ form: result.error || 'Booking API is not connected yet.' })
         setState('error')
@@ -70,6 +82,7 @@ export function BookingForm() {
             required
             name="name"
             type="text"
+            placeholder="Rajesh Sharma"
             value={formData.name}
             onChange={(e) => setFormData((f) => ({ ...f, name: e.target.value }))}
             className={inputClassName('name')}
@@ -78,16 +91,46 @@ export function BookingForm() {
         </label>
 
         <label className="grid gap-2 text-sm font-semibold">
-          Phone <span className="text-destructive">*</span>
+          Phone Number <span className="text-destructive">*</span>
           <input
             required
             name="phone"
             type="tel"
+            placeholder="10-digit mobile number"
             value={formData.phone}
             onChange={(e) => setFormData((f) => ({ ...f, phone: e.target.value }))}
             className={inputClassName('phone')}
           />
           {errors.phone && <span className="text-xs text-destructive">{errors.phone}</span>}
+        </label>
+
+        <label className="grid gap-2 text-sm font-semibold">
+          Email Address (Optional)
+          <input
+            name="email"
+            type="email"
+            placeholder="rajesh@example.com"
+            value={formData.email}
+            onChange={(e) => setFormData((f) => ({ ...f, email: e.target.value }))}
+            className={inputClassName('email')}
+          />
+        </label>
+
+        <label className="grid gap-2 text-sm font-semibold">
+          Select Outlet <span className="text-destructive">*</span>
+          <select
+            required
+            name="outlet"
+            value={formData.outlet}
+            onChange={(e) => setFormData((f) => ({ ...f, outlet: e.target.value }))}
+            className={inputClassName('outlet')}
+          >
+            {locations.map((loc) => (
+              <option key={loc.id} value={loc.id}>
+                {loc.name.replace("Meenu's Dosa — ", '')}
+              </option>
+            ))}
+          </select>
         </label>
 
         <label className="grid gap-2 text-sm font-semibold">
@@ -104,25 +147,29 @@ export function BookingForm() {
         </label>
 
         <label className="grid gap-2 text-sm font-semibold">
-          Time <span className="text-destructive">*</span>
-          <input
+          Time Slot <span className="text-destructive">*</span>
+          <select
             required
             name="time"
-            type="time"
             value={formData.time}
             onChange={(e) => setFormData((f) => ({ ...f, time: e.target.value }))}
             className={inputClassName('time')}
-          />
+          >
+            {timeSlots.map((t) => (
+              <option key={t} value={t}>{t}</option>
+            ))}
+          </select>
           {errors.time && <span className="text-xs text-destructive">{errors.time}</span>}
         </label>
 
         <label className="grid gap-2 text-sm font-semibold sm:col-span-2">
-          Number of guests <span className="text-destructive">*</span>
+          Number of Guests <span className="text-destructive">*</span>
           <input
             required
             name="guests"
             type="number"
             min="1"
+            max="20"
             value={formData.guests}
             onChange={(e) => setFormData((f) => ({ ...f, guests: e.target.value }))}
             className={inputClassName('guests')}
@@ -132,10 +179,11 @@ export function BookingForm() {
       </div>
 
       <label className="grid gap-2 text-sm font-semibold">
-        Optional message
+        Special Requests / Dietary Needs (Optional)
         <textarea
           name="message"
           rows={4}
+          placeholder="High chair needed, corner booth preferred, birthday dinner, etc."
           value={formData.message}
           onChange={(e) => setFormData((f) => ({ ...f, message: e.target.value }))}
           className="rounded-xl border bg-background p-3 font-normal outline-none focus:ring-2 focus:ring-primary"
@@ -159,7 +207,7 @@ export function BookingForm() {
         disabled={state === 'loading'}
         className="h-12 rounded-full bg-primary px-5 text-sm font-bold text-primary-foreground disabled:opacity-60"
       >
-        {state === 'loading' ? 'Submitting...' : 'Request a table'}
+        {state === 'loading' ? 'Submitting...' : 'Reserve Your Table'}
       </button>
     </form>
   )

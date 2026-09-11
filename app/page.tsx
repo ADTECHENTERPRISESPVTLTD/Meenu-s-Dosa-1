@@ -18,12 +18,15 @@ export default function Home() {
             <p className="mt-5 max-w-lg text-base leading-7 text-muted-foreground">
               {siteConfig.description}
             </p>
-            <div className="mt-8 flex flex-col gap-3">
-              <Link href="/order" className="inline-flex items-center justify-center gap-2 rounded-full bg-primary px-6 py-4 text-base font-bold text-primary-foreground shadow-sm">
+            <div className="mt-8 flex flex-wrap items-center gap-3">
+              <Link href="/order" className="inline-flex items-center gap-2 rounded-full bg-primary px-6 py-3.5 text-base font-bold text-primary-foreground shadow-sm">
                 Order online <ArrowRight size={18}/>
               </Link>
-              <Link href="/book" className="inline-flex items-center justify-center gap-2 rounded-full border-2 border-foreground bg-background px-6 py-4 text-base font-bold text-foreground">
+              <Link href="/book" className="inline-flex items-center gap-2 rounded-full border-2 border-foreground bg-background px-6 py-3.5 text-base font-bold text-foreground">
                 Book a table
+              </Link>
+              <Link href="/locations" className="inline-flex items-center gap-2 rounded-full border px-6 py-3.5 text-base font-bold">
+                <MapPin size={16} /> Find an outlet
               </Link>
             </div>
             <div className="mt-8 flex flex-wrap gap-5 text-sm text-muted-foreground">
