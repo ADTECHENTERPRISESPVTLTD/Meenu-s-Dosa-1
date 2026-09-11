@@ -2,11 +2,13 @@ import { Router } from 'express';
 import { requireAdminAuth, requireRole } from '../middleware/auth';
 import { handleValidation } from '../middleware/validate';
 import {
+  listMenuItems,
   createMenuItem,
   updateMenuItem,
   deleteMenuItem,
 } from '../controllers/menucontroller';
 import {
+  listCategories,
   createCategory,
   updateCategory,
   deleteCategory,
@@ -47,6 +49,7 @@ router.use(requireAdminAuth);
 router.get('/dashboard', getDashboard);
 
 // Menu management
+router.get('/menu', listMenuItems);
 router.post('/menu', menuItemValidator, handleValidation, createMenuItem);
 router.put(
   '/menu/:id',
@@ -64,6 +67,7 @@ router.delete(
 );
 
 // Category management
+router.get('/categories', listCategories);
 router.post('/categories', categoryValidator, handleValidation, createCategory);
 router.put(
   '/categories/:id',
