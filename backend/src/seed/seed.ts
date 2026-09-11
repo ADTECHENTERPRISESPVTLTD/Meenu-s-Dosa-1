@@ -137,6 +137,7 @@ const LOCATIONS: {
   name: string;
   address: string;
   phone: string;
+  hours: string;
   openingHours: {
     day: 'monday' | 'tuesday' | 'wednesday' | 'thursday' | 'friday' | 'saturday' | 'sunday';
     open: string;
@@ -149,21 +150,29 @@ const LOCATIONS: {
   isActive: boolean;
 }[] = [
   {
-    name: "Meenu's Dosa - Main Outlet",
-    address: 'Update with the verified outlet address',
-    phone: '9999999999',
+    name: "Meenu's Dosa — Minal Residency",
+    address: 'Shop No. 21 & 22, Ground Floor, Raj Capital, Minaal Residency, J.K. Road, Ayodhya Bypass, Bhopal, Madhya Pradesh – 462023',
+    phone: '+91 6262 9555 05',
+    hours: '8:00 AM – 10:30 PM',
     openingHours: [
-      { day: 'monday', open: '08:00', close: '22:00', isClosed: false },
-      { day: 'tuesday', open: '08:00', close: '22:00', isClosed: false },
-      { day: 'wednesday', open: '08:00', close: '22:00', isClosed: false },
-      { day: 'thursday', open: '08:00', close: '22:00', isClosed: false },
-      { day: 'friday', open: '08:00', close: '22:00', isClosed: false },
-      { day: 'saturday', open: '08:00', close: '22:30', isClosed: false },
-      { day: 'sunday', open: '08:00', close: '22:30', isClosed: false },
+      ...(['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'] as const).map((day) => ({ day, open: '08:00', close: '22:30', isClosed: false })),
     ],
-    mapsUrl: '',
-    zomatoUrl: '',
-    swiggyUrl: '',
+    mapsUrl: 'https://www.google.com/maps/place/Meenu%27s+Dosa+-+Minal+Residency',
+    zomatoUrl: 'https://www.zomato.com/bhopal/meenus-dosa-ayodhya-bypass/',
+    swiggyUrl: 'https://www.swiggy.com/city/bhopal/meenus-dosa-minal-minaal-residency-piplani-rest995939',
+    isActive: true,
+  },
+  {
+    name: "Meenu's Dosa — MP Nagar",
+    address: 'Shop No. 1, Plot No. 130, Zone 2, Maharana Pratap Nagar, Bhopal, Madhya Pradesh – 462011',
+    phone: '+91 6262 9555 06',
+    hours: '8:00 AM – 10:30 PM',
+    openingHours: [
+      ...(['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'] as const).map((day) => ({ day, open: '08:00', close: '22:30', isClosed: false })),
+    ],
+    mapsUrl: 'https://www.google.com/maps/place/Meenu%27s+Dosa+-+MP+Nagar',
+    zomatoUrl: 'https://www.zomato.com/bhopal/meenus-dosa-maharana-pratap-nagar/',
+    swiggyUrl: 'https://www.swiggy.com/restaurants/bhopal/maharana-pratap-nagar/meenu-s-dosa-812869/dineout',
     isActive: true,
   },
 ];
@@ -223,6 +232,8 @@ async function seedMenuItems(categoryIdByName: Map<string, mongoose.Types.Object
 }
 
 async function seedLocations() {
+  await Location.deleteOne({ name: "Meenu's Dosa - Main Outlet" });
+
   for (const loc of LOCATIONS) {
     await Location.findOneAndUpdate(
       { name: loc.name },

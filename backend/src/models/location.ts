@@ -11,6 +11,7 @@ export interface ILocation extends Document {
   name: string;
   address: string;
   phone: string;
+  hours?: string;
   openingHours: IOpeningHours[];
   mapsUrl?: string;
   zomatoUrl?: string;
@@ -44,6 +45,7 @@ const locationSchema = new Schema<ILocation>(
       trim: true,
       match: [/^[+]?[0-9\s-]{7,15}$/, 'Invalid phone number'],
     },
+    hours: { type: String, trim: true, default: '' },
     openingHours: { type: [openingHoursSchema], default: [] },
     mapsUrl: { type: String, trim: true, default: '' },
     zomatoUrl: { type: String, trim: true, default: '' },

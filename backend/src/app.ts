@@ -13,6 +13,7 @@ import menuRoutes from './routes/menuroutes';
 import categoryRoutes from './routes/categoryroutes';
 import locationRoutes from './routes/locationroutes';
 import bookingRoutes from './routes/bookingroutes';
+import orderRoutes from './routes/orderroutes';
 import settingsRoutes from './routes/settingsroutes';
 import adminRoutes from './routes/adminroutes';
 
@@ -79,6 +80,7 @@ export function createApp(): Express {
   app.use('/api/categories', categoryRoutes);
   app.use('/api/locations', locationRoutes);
   app.use('/api/bookings', bookingRoutes);
+  app.use('/api/orders', orderRoutes);
   app.use('/api/settings', settingsRoutes);
   app.use('/api/admin', adminRoutes);
 

@@ -1,6 +1,6 @@
 import { Metadata } from 'next'
 import { Suspense } from 'react'
-import { MenuContent } from './menu-content'
+import MenuContent from './menu-content'
 
 export const metadata: Metadata = {
   title: "Menu | Meenu's Dosa",

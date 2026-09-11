@@ -96,3 +96,9 @@ export const updateBookingStatus = asyncHandler(async (req: Request, res: Respon
   if (!booking) throw new NotFoundError('Booking not found');
   sendSuccess(res, booking, 'Booking updated');
 });
+
+export const deleteBooking = asyncHandler(async (req: Request, res: Response) => {
+  const booking = await Booking.findByIdAndDelete(req.params.id);
+  if (!booking) throw new NotFoundError('Booking not found');
+  sendSuccess(res, null, 'Booking deleted');
+});

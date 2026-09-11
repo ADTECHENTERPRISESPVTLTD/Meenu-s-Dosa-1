@@ -1,9 +1,9 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { categories, formatPrice, categoryImage, type MenuItem, type Category } from '@/lib/data'
+import { formatPrice, type MenuItem, type Category } from '@/lib/data'
 import { CategoryImage, Shell } from '@/components/site-shell'
-import { menuApi, categoryApi } from '@/lib/api'
+import { menuApi, categoryApi, orderApi } from '@/lib/api'
 
 const CART_STORAGE_KEY = 'meenu-dosa-cart'
 
@@ -24,11 +24,34 @@ export default function MenuContent() {
     const fetchData = async () => {
       try {
         const [menuRes, catRes] = await Promise.all([
-          menuApi.list({ available: true }),
+          menuApi.list(),
           categoryApi.list(),
         ])
-        if (menuRes.success) setMenuItems(menuRes.data)
-        if (catRes.success) setMenuCategories(catRes.data)
+        if (catRes.success) {
+          setMenuCategories(catRes.data.map((item) => ({
+            id: item._id,
+            name: item.name,
+            image: item.image,
+            description: '',
+            slug: item.slug,
+            sortOrder: item.sortOrder,
+            isActive: item.isActive,
+          })))
+        }
+        if (menuRes.success) {
+          setMenuItems(menuRes.data.filter((item) => item.isAvailable !== false).map((item) => ({
+            id: item._id,
+            name: item.name,
+            price: item.price,
+            description: item.description,
+            category: typeof item.category === 'string' ? item.category : item.category?._id,
+            available: item.isAvailable,
+            vegetarian: item.isVegetarian,
+            image: item.image || '',
+            isFeatured: item.isFeatured,
+            sortOrder: item.sortOrder,
+          })))
+        }
       } catch (err) {
         setError('Failed to load menu. Please try again later.')
         console.error(err)
@@ -50,25 +73,20 @@ export default function MenuContent() {
     try { localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(cart)) } catch {}
   }, [cart])
 
-  const saveOrder = (method: 'qr' | 'cash' | 'zomato' | 'swiggy') => {
+  const saveOrder = async (method: 'qr' | 'cash' | 'zomato' | 'swiggy') => {
     if (cartCount === 0) return
-    const order = {
-      id: `ORD-${Date.now().toString(36).toUpperCase()}`,
-      date: Date.now(),
-      items: cartItems.map((item) => ({ id: item.id, name: item.name, price: item.price, quantity: item.quantity })),
-      total: cartTotal,
-      paymentMethod: method,
-      source: method === 'zomato' || method === 'swiggy' ? method : 'direct',
-      status: 'pending' as const,
-    }
     try {
-      const existing = localStorage.getItem('meenu-dosa-orders')
-      const orders = existing ? JSON.parse(existing) : []
-      orders.unshift(order)
-      localStorage.setItem('meenu-dosa-orders', JSON.stringify(orders))
-    } catch {}
-    setLastOrderId(order.id)
-    setOrderPlaced(true)
+      const response = await orderApi.create({
+        items: cartItems.map((item) => ({ id: item.id, quantity: item.quantity })),
+        paymentMethod: method,
+        source: method === 'zomato' || method === 'swiggy' ? method : 'direct',
+      })
+      if (!response.success) throw new Error(response.message)
+      setLastOrderId(response.data._id || response.data.id)
+      setOrderPlaced(true)
+    } catch {
+      setError('Failed to place order. Please try again.')
+    }
   }
 
   const clearCart = () => {
@@ -135,10 +153,10 @@ export default function MenuContent() {
       <div className="mt-8 flex flex-col gap-3 sm:flex-row">
         <label className="relative flex-1">
           <span className="sr-only">Search dishes</span>
-          <svg className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground" size={18} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+          <svg className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground" width={18} height={18} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
           <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search dosa, idli, coffee..." className="h-12 w-full rounded-full border bg-background pl-11 pr-4 outline-none focus:ring-2 focus:ring-primary" />
         </label>
-        <button type="button" className="inline-flex h-12 items-center justify-center gap-2 rounded-full border px-5 text-sm font-semibold"><svg size={16} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" /></svg> Dietary options</button>
+        <button type="button" className="inline-flex h-12 items-center justify-center gap-2 rounded-full border px-5 text-sm font-semibold"><svg width={16} height={16} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" /></svg> Dietary options</button>
       </div>
       <div className="sticky top-16 z-20 -mx-4 mt-8 overflow-x-auto border-y bg-background/95 px-4 py-3 backdrop-blur sm:mx-0 sm:rounded-full sm:border">
         <div className="flex min-w-max gap-2">
@@ -168,10 +186,10 @@ export default function MenuContent() {
                   <p className="mt-1 text-xs text-muted-foreground">{item.vegetarian ? 'Vegetarian · ' : ''}{item.available ? 'Available' : 'Currently unavailable'}</p>
                   <div className="mt-4 flex items-center gap-3">
                     <p className="font-black text-primary">{formatPrice(item.price)}</p>
-                    {count === 0 ? <button type="button" onClick={() => updateCart(item, 1)} className="inline-flex items-center gap-1 rounded-full border px-3 py-1.5 text-xs font-bold hover:border-primary"><svg size={14} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg> Add</button> : <div className="flex items-center gap-2 rounded-full border px-1 py-1">
-                      <button type="button" onClick={() => updateCart(item, -1)} aria-label={`Remove one ${item.name}`} className="grid size-7 place-items-center rounded-full hover:bg-muted"><svg size={14} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 12H4" /></svg></button>
+                    {count === 0 ? <button type="button" onClick={() => updateCart(item, 1)} className="inline-flex items-center gap-1 rounded-full border px-3 py-1.5 text-xs font-bold hover:border-primary"><svg width={14} height={14} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg> Add</button> : <div className="flex items-center gap-2 rounded-full border px-1 py-1">
+                      <button type="button" onClick={() => updateCart(item, -1)} aria-label={`Remove one ${item.name}`} className="grid size-7 place-items-center rounded-full hover:bg-muted"><svg width={14} height={14} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 12H4" /></svg></button>
                       <span className="min-w-5 text-center text-sm font-bold">{count}</span>
-                      <button type="button" onClick={() => updateCart(item, 1)} aria-label={`Add one ${item.name}`} className="grid size-7 place-items-center rounded-full hover:bg-muted"><svg size={14} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg></button>
+                      <button type="button" onClick={() => updateCart(item, 1)} aria-label={`Add one ${item.name}`} className="grid size-7 place-items-center rounded-full hover:bg-muted"><svg width={14} height={14} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg></button>
                     </div>}
                   </div>
                 </div>
@@ -190,7 +208,7 @@ export default function MenuContent() {
                 <span className="text-sm font-bold">{cartCount} items · {formatPrice(cartTotal)}</span>
               </button>
               <div className="flex items-center gap-2">
-                <button type="button" onClick={() => { setCart({}); setOpen(false); setPaymentMethod(null) }} className="rounded-full border p-2 text-destructive"><svg size={16} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg></button>
+                <button type="button" onClick={() => { setCart({}); setOpen(false); setPaymentMethod(null) }} className="rounded-full border p-2 text-destructive"><svg width={16} height={16} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg></button>
                 <button type="button" onClick={() => { setOpen((current) => !current); setPaymentMethod(null) }} className="rounded-full bg-primary px-4 py-2 text-sm font-bold text-primary-foreground">{open ? 'Close' : 'Checkout'}</button>
               </div>
             </div>
@@ -205,9 +223,9 @@ export default function MenuContent() {
                     <div className="flex items-center gap-3">
                       <p className="font-black text-primary">{formatPrice((item.price || 0) * item.quantity)}</p>
                       <div className="flex items-center gap-1 rounded-full border">
-                        <button type="button" onClick={() => updateCart(item, -1)} className="grid size-7 place-items-center rounded-full hover:bg-muted"><svg size={14} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 12H4" /></svg></button>
+                        <button type="button" onClick={() => updateCart(item, -1)} className="grid size-7 place-items-center rounded-full hover:bg-muted"><svg width={14} height={14} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 12H4" /></svg></button>
                         <span className="min-w-5 text-center text-sm font-bold">{item.quantity}</span>
-                        <button type="button" onClick={() => updateCart(item, 1)} className="grid size-7 place-items-center rounded-full hover:bg-muted"><svg size={14} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg></button>
+                        <button type="button" onClick={() => updateCart(item, 1)} className="grid size-7 place-items-center rounded-full hover:bg-muted"><svg width={14} height={14} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg></button>
                       </div>
                     </div>
                   </li>
@@ -280,3 +298,4 @@ export default function MenuContent() {
       <div className="h-24"/>
     </main>
   </Shell>
+}

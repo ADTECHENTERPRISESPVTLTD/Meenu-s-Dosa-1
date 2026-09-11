@@ -4,9 +4,9 @@ import { useMemo, useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { LogOut, Pencil, Plus, Trash2, X, Calendar, MapPin, Globe, Loader2 } from 'lucide-react'
-import { categories, formatPrice, siteConfig, type MenuItem } from '@/lib/data'
+import { formatPrice, siteConfig, type Category, type MenuItem } from '@/lib/data'
 import { Shell } from '@/components/site-shell'
-import { adminApi } from '@/lib/api'
+import { adminApi, categoryApi } from '@/lib/api'
 import { useAdminAuth } from '@/lib/auth-context'
 
 const SESSION_KEY = 'meenu-dosa-admin-session'
@@ -39,6 +39,7 @@ interface Order {
 }
 
 const STATUS_OPTIONS: OrderStatus[] = ['pending', 'confirmed', 'preparing', 'ready', 'delivered', 'cancelled']
+const BOOKING_STATUS_OPTIONS = ['pending', 'confirmed', 'rejected', 'completed', 'cancelled']
 const STATUS_COLORS: Record<OrderStatus, string> = {
   pending: 'bg-yellow-500/15 text-yellow-700',
   confirmed: 'bg-blue-500/15 text-blue-700',
@@ -48,14 +49,43 @@ const STATUS_COLORS: Record<OrderStatus, string> = {
   cancelled: 'bg-destructive/15 text-destructive',
 }
 
+function normalizeMenuItem(item: any): MenuItem {
+  return {
+    id: item._id || item.id,
+    name: item.name,
+    price: item.price,
+    description: item.description,
+    category: typeof item.category === 'string' ? item.category : item.category?._id || item.category?.id || '',
+    available: item.isAvailable ?? item.available ?? true,
+    vegetarian: item.isVegetarian ?? item.vegetarian ?? true,
+    image: item.image || '',
+    isFeatured: item.isFeatured,
+    sortOrder: item.sortOrder,
+  }
+}
+
+function normalizeCategory(category: any): Category {
+  return {
+    id: category._id || category.id,
+    name: category.name,
+    image: category.image || '',
+    description: category.description || '',
+    slug: category.slug,
+    sortOrder: category.sortOrder,
+    isActive: category.isActive,
+  }
+}
+
 export default function AdminDashboard() {
   const router = useRouter()
   const { admin, token, loading: authLoading, logout, refresh } = useAdminAuth()
+  const canManageIntegrations = admin?.role === 'super_admin' || admin?.role === 'admin'
   const [tab, setTab] = useState<Tab>('dashboard')
   const [menuItems, setMenuItems] = useState<MenuItem[]>([])
+  const [categories, setCategories] = useState<Category[]>([])
   const [showForm, setShowForm] = useState(false)
   const [editing, setEditing] = useState<MenuItem | null>(null)
-  const [form, setForm] = useState({ name: '', category: categories[0]?.id ?? '', price: '' })
+  const [form, setForm] = useState({ name: '', category: '', price: '' })
   const [orders, setOrders] = useState<Order[]>([])
   const [orderFilter, setOrderFilter] = useState<'all' | 'direct' | 'zomato' | 'swiggy'>('all')
   const [statusFilter, setStatusFilter] = useState<'all' | OrderStatus>('all')
@@ -75,20 +105,42 @@ export default function AdminDashboard() {
   }, [authLoading, token, router])
 
   const fetchDashboardData = async () => {
-    try {
-      const [menuRes, bookingsRes, locationsRes] = await Promise.all([
-        adminApi.menu.list(),
-        adminApi.bookings.list(),
-        adminApi.locations.list(),
-      ])
-      if (menuRes.success) setMenuItems(menuRes.data)
-      if (bookingsRes.success) setBookings(bookingsRes.data.bookings)
-      if (locationsRes.success) setLocations(locationsRes.data)
-      setLoading(false)
-    } catch (err) {
-      console.error(err)
-      setLoading(false)
+    const requests = await Promise.allSettled([
+      adminApi.menu.list(),
+      adminApi.bookings.list(),
+      adminApi.locations.list(),
+      categoryApi.list(true),
+      adminApi.orders.list(),
+      adminApi.settings.get(),
+      adminApi.settings.getIntegrations(),
+    ])
+
+    const [menuResult, bookingsResult, locationsResult, categoriesResult, ordersResult, settingsResult, integrationsResult] = requests
+    if (menuResult.status === 'fulfilled' && menuResult.value.success) setMenuItems(menuResult.value.data.map(normalizeMenuItem))
+    if (bookingsResult.status === 'fulfilled' && bookingsResult.value.success) {
+      setBookings(bookingsResult.value.data.bookings.map((booking: any) => ({ ...booking, id: booking._id || booking.id })))
     }
+    if (locationsResult.status === 'fulfilled' && locationsResult.value.success) {
+      setLocations(locationsResult.value.data.map((location: any) => ({ ...location, id: location._id || location.id })))
+    }
+    if (categoriesResult.status === 'fulfilled' && categoriesResult.value.success) setCategories(categoriesResult.value.data.map(normalizeCategory))
+    if (ordersResult.status === 'fulfilled' && ordersResult.value.success) {
+      setOrders(ordersResult.value.data.map((order: any) => ({
+          ...order,
+          id: order._id || order.id,
+          date: new Date(order.createdAt || order.date).getTime(),
+          items: order.items.map((item: any) => ({ ...item, id: item.menuItem || item.id })),
+        })))
+    }
+    if (settingsResult.status === 'fulfilled' && settingsResult.value.success) {
+        const settings = settingsResult.value.data
+        setContent((current) => ({ ...current, name: settings.restaurantName || current.name, description: settings.description || '', phone: settings.phone || '', whatsapp: settings.whatsapp || '', instagram: settings.instagram || '', zomato: settings.zomato || '', swiggy: settings.swiggy || '' }))
+    }
+    if (integrationsResult.status === 'fulfilled' && integrationsResult.value.success) {
+        const integrations = integrationsResult.value.data
+        setContent((current) => ({ ...current, whatsapp: integrations.whatsappNumber || current.whatsapp, zomato: integrations.zomatoUrl || current.zomato, swiggy: integrations.swiggyUrl || current.swiggy }))
+    }
+    setLoading(false)
   }
 
   useEffect(() => {
@@ -97,35 +149,33 @@ export default function AdminDashboard() {
     }
   }, [token])
 
-  useEffect(() => {
-    try {
-      const stored = localStorage.getItem(ORDER_HISTORY_KEY)
-      if (stored) setOrders(JSON.parse(stored))
-    } catch {}
-  }, [])
-
-  useEffect(() => {
-    try {
-      localStorage.setItem(ORDER_HISTORY_KEY, JSON.stringify(orders))
-    } catch {}
-  }, [orders])
-
   const logoutHandler = () => {
     logout()
     router.replace('/admin/login')
   }
 
-  const updateOrderStatus = (orderId: string, status: OrderStatus) => {
-    setOrders((current) => current.map((order) => order.id === orderId ? { ...order, status } : order))
+  const updateOrderStatus = async (orderId: string, status: OrderStatus) => {
+    try {
+      const response = await adminApi.orders.update(orderId, { status })
+      if (response.success) setOrders((current) => current.map((order) => order.id === orderId ? { ...order, status } : order))
+    } catch { alert('Failed to update order status') }
   }
 
-  const togglePaymentStatus = (orderId: string) => {
-    setOrders((current) => current.map((order) => order.id === orderId ? { ...order, paid: !order.paid } : order))
+  const togglePaymentStatus = async (orderId: string) => {
+    const order = orders.find((entry) => entry.id === orderId)
+    if (!order) return
+    try {
+      const response = await adminApi.orders.update(orderId, { paid: !order.paid })
+      if (response.success) setOrders((current) => current.map((entry) => entry.id === orderId ? { ...entry, paid: !entry.paid } : entry))
+    } catch { alert('Failed to update payment status') }
   }
 
-  const deleteOrder = (orderId: string) => {
+  const deleteOrder = async (orderId: string) => {
     if (window.confirm('Delete this order?')) {
-      setOrders((current) => current.filter((order) => order.id !== orderId))
+      try {
+        const response = await adminApi.orders.delete(orderId)
+        if (response.success) setOrders((current) => current.filter((order) => order.id !== orderId))
+      } catch { alert('Failed to delete order') }
     }
   }
 
@@ -145,7 +195,7 @@ export default function AdminDashboard() {
       } else {
         const res = await adminApi.menu.create({ name, category: form.category, price, isAvailable: true, isVegetarian: true })
         if (res.success) {
-          setMenuItems((current) => [{ ...res.data, id: res.data._id || res.data.id }, ...current])
+          setMenuItems((current) => [normalizeMenuItem(res.data), ...current])
         }
       }
       setShowForm(false)
@@ -197,8 +247,10 @@ export default function AdminDashboard() {
 
   const deleteBooking = async (bookingId: string) => {
     if (window.confirm('Delete this booking?')) {
-      // No delete API for bookings, just remove from local state
-      setBookings((current) => current.filter((booking) => booking.id !== bookingId))
+      try {
+        const response = await adminApi.bookings.delete(bookingId)
+        if (response.success) setBookings((current) => current.filter((booking) => booking.id !== bookingId))
+      } catch { alert('Failed to delete booking') }
     }
   }
 
@@ -257,8 +309,25 @@ export default function AdminDashboard() {
         zomato: formData.get('zomato') as string,
         swiggy: formData.get('swiggy') as string,
       }
+      const settingsRes = await adminApi.settings.update({
+        restaurantName: updated.name,
+        description: updated.description,
+        phone: updated.phone,
+        whatsapp: updated.whatsapp,
+        instagram: updated.instagram,
+        zomato: updated.zomato,
+        swiggy: updated.swiggy,
+      })
+      if (!settingsRes.success) throw new Error('Settings update failed')
+      if (canManageIntegrations) {
+        const integrationsRes = await adminApi.settings.updateIntegrations({
+          whatsappNumber: updated.whatsapp,
+          zomatoUrl: updated.zomato,
+          swiggyUrl: updated.swiggy,
+        })
+        if (!integrationsRes.success) throw new Error('Integration settings update failed')
+      }
       setContent(updated)
-      try { localStorage.setItem(CONTENT_KEY, JSON.stringify(updated)) } catch {}
       alert('Content saved successfully')
     } catch {
       alert('Failed to save content')
@@ -570,10 +639,8 @@ export default function AdminDashboard() {
                           <td className="py-4">{booking.time}</td>
                           <td className="py-4">{booking.guestCount}</td>
                           <td className="py-4">
-                            <select value={booking.status || 'pending'} onChange={(e) => updateBookingStatus(booking._id || booking.id, e.target.value)} className={`rounded-full px-3 py-1 text-xs font-bold ${booking.status === 'confirmed' ? 'bg-green-500/15 text-green-700' : booking.status === 'cancelled' ? 'bg-destructive/15 text-destructive' : 'bg-yellow-500/15 text-yellow-700'}`}>
-                              <option value="pending">Pending</option>
-                              <option value="confirmed">Confirmed</option>
-                              <option value="cancelled">Cancelled</option>
+                            <select value={booking.status || 'pending'} onChange={(e) => updateBookingStatus(booking._id || booking.id, e.target.value)} className={`rounded-full px-3 py-1 text-xs font-bold ${booking.status === 'confirmed' || booking.status === 'completed' ? 'bg-green-500/15 text-green-700' : booking.status === 'cancelled' || booking.status === 'rejected' ? 'bg-destructive/15 text-destructive' : 'bg-yellow-500/15 text-yellow-700'}`}>
+                              {BOOKING_STATUS_OPTIONS.map((status) => <option key={status} value={status}>{status}</option>)}
                             </select>
                           </td>
                           <td className="py-4">

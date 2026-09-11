@@ -17,17 +17,21 @@ import {
   listBookings,
   getBooking,
   updateBookingStatus,
+  deleteBooking,
 } from '../controllers/bookingcontroller';
 import {
   createLocation,
   updateLocation,
   deleteLocation,
 } from '../controllers/locationcontroller';
+import { listLocations } from '../controllers/locationcontroller';
 import {
   updateRestaurantSettings,
   updateIntegrationSettings,
 } from '../controllers/settingscontroller';
+import { getRestaurantSettings, getPublicIntegrationSettings } from '../controllers/settingscontroller';
 import { getDashboard } from '../controllers/dashboardcontroller';
+import { listOrders, updateOrder, deleteOrder } from '../controllers/ordercontroller';
 import {
   menuItemValidator,
   menuItemUpdateValidator,
@@ -94,8 +98,15 @@ router.put(
   handleValidation,
   updateBookingStatus
 );
+router.delete('/bookings/:id', mongoIdParamValidator(), handleValidation, requireRole('super_admin', 'admin'), deleteBooking);
+
+// Order management
+router.get('/orders', listOrders);
+router.put('/orders/:id', mongoIdParamValidator(), handleValidation, updateOrder);
+router.delete('/orders/:id', mongoIdParamValidator(), handleValidation, requireRole('super_admin', 'admin'), deleteOrder);
 
 // Location management
+router.get('/locations', listLocations);
 router.post('/locations', locationValidator, handleValidation, createLocation);
 router.put(
   '/locations/:id',
@@ -113,6 +124,8 @@ router.delete(
 );
 
 // Restaurant + integration settings
+router.get('/settings', getRestaurantSettings);
+router.get('/settings/integrations', getPublicIntegrationSettings);
 router.put('/settings', restaurantSettingsValidator, handleValidation, updateRestaurantSettings);
 router.put('/settings/integrations', requireRole('super_admin', 'admin'), updateIntegrationSettings);
 

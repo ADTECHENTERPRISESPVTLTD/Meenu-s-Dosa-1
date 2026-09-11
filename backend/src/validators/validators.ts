@@ -72,6 +72,7 @@ export const locationValidator = [
     .trim()
     .matches(/^[+]?[0-9\s-]{7,15}$/)
     .withMessage('A valid phone number is required'),
+  body('hours').optional().trim().isLength({ max: 100 }),
   body('openingHours').optional().isArray(),
   body('mapsUrl').optional().trim().isURL().withMessage('Maps URL must be a valid URL'),
   body('zomatoUrl').optional({ checkFalsy: true }).trim().isURL(),
@@ -86,6 +87,7 @@ export const locationUpdateValidator = [
     .optional()
     .trim()
     .matches(/^[+]?[0-9\s-]{7,15}$/),
+  body('hours').optional().trim().isLength({ max: 100 }),
   body('openingHours').optional().isArray(),
   body('mapsUrl').optional({ checkFalsy: true }).trim().isURL(),
   body('zomatoUrl').optional({ checkFalsy: true }).trim().isURL(),

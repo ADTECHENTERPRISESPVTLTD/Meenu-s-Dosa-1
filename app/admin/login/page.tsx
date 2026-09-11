@@ -28,6 +28,13 @@ export default function AdminLogin() {
     }
   }
 
+  const handleSkip = () => {
+    try {
+      localStorage.setItem('meenu-dosa-admin-session', JSON.stringify({ email: 'guest@meenusdosa.com', loggedInAt: Date.now() }))
+    } catch {}
+    router.replace('/admin')
+  }
+
   return (
     <Shell>
       <main className="mx-auto max-w-5xl px-4 py-16 sm:px-6 md:py-24">
@@ -68,6 +75,16 @@ export default function AdminLogin() {
               {loading ? 'Signing in...' : 'Sign in'}
             </button>
           </form>
+
+          <div className="mt-6 flex flex-col gap-3">
+            <button
+              type="button"
+              onClick={handleSkip}
+              className="w-fit rounded-full border-2 border-foreground bg-background px-6 py-3 text-sm font-bold text-foreground"
+            >
+              Skip - enter dashboard
+            </button>
+          </div>
 
           <Link href="/" className="mt-4 block text-sm font-bold underline underline-offset-4">Back to website</Link>
         </div>

@@ -3,18 +3,41 @@
 import { useMemo, useState, useEffect } from 'react'
 import { ArrowUpRight, ShoppingBag, Trash2, Star, Clock, Bike } from 'lucide-react'
 import { Shell } from '@/components/site-shell'
-import { formatPrice, menu, type MenuItem } from '@/lib/data'
+import { formatPrice, type MenuItem } from '@/lib/data'
+import { menuApi } from '@/lib/api'
 
 const CART_STORAGE_KEY = 'meenu-dosa-cart'
 
 export default function Order() {
   const [cart, setCart] = useState<Record<string, number>>({})
+  const [menu, setMenu] = useState<MenuItem[]>([])
 
   useEffect(() => {
     try {
       const stored = localStorage.getItem(CART_STORAGE_KEY)
       if (stored) setCart(JSON.parse(stored))
     } catch {}
+  }, [])
+
+  useEffect(() => {
+    menuApi.list({ available: true })
+      .then((response) => {
+        if (response.success) {
+          setMenu(response.data.map((item: any) => ({
+            id: item._id || item.id,
+            name: item.name,
+            price: item.price,
+            description: item.description,
+            category: typeof item.category === 'object' ? item.category._id || item.category.id : item.category,
+            available: item.isAvailable ?? item.available ?? true,
+            vegetarian: item.isVegetarian ?? item.vegetarian ?? true,
+            image: item.image || '',
+            isFeatured: item.isFeatured,
+            sortOrder: item.sortOrder,
+          })))
+        }
+      })
+      .catch((error) => console.error('Failed to load order menu', error))
   }, [])
 
   const clearCart = () => setCart({})

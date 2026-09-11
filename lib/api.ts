@@ -82,6 +82,10 @@ export const bookingApi = {
   }) => api.post<{ success: boolean; data: any; message: string }>('/api/bookings', data),
 }
 
+export const orderApi = {
+  create: (data: { items: { id: string; quantity: number }[]; paymentMethod: string; source: string }) => api.post<{ success: boolean; data: any; message: string }>('/api/orders', data),
+}
+
 export const settingsApi = {
   get: () => api.get<{ success: boolean; data: any }>('/api/settings'),
   getIntegrations: () => api.get<{ success: boolean; data: any }>('/api/settings/integrations'),
@@ -121,6 +125,12 @@ export const adminApi = {
     },
     get: (id: string) => api.get<{ success: boolean; data: any }>(`/api/admin/bookings/${id}`),
     updateStatus: (id: string, status: string) => api.put<{ success: boolean; data: any; message: string }>(`/api/admin/bookings/${id}`, { status }),
+    delete: (id: string) => api.delete<{ success: boolean; message: string }>(`/api/admin/bookings/${id}`),
+  },
+  orders: {
+    list: () => api.get<{ success: boolean; data: any[] }>('/api/admin/orders'),
+    update: (id: string, data: { status?: string; paid?: boolean }) => api.put<{ success: boolean; data: any; message: string }>(`/api/admin/orders/${id}`, data),
+    delete: (id: string) => api.delete<{ success: boolean; message: string }>(`/api/admin/orders/${id}`),
   },
   locations: {
     list: () => api.get<{ success: boolean; data: any[] }>('/api/admin/locations'),
@@ -129,6 +139,8 @@ export const adminApi = {
     delete: (id: string) => api.delete<{ success: boolean; message: string }>(`/api/admin/locations/${id}`),
   },
   settings: {
+    get: () => api.get<{ success: boolean; data: any }>('/api/admin/settings'),
+    getIntegrations: () => api.get<{ success: boolean; data: any }>('/api/admin/settings/integrations'),
     update: (data: any) => api.put<{ success: boolean; data: any; message: string }>('/api/admin/settings', data),
     updateIntegrations: (data: any) => api.put<{ success: boolean; data: any; message: string }>('/api/admin/settings/integrations', data),
   },
