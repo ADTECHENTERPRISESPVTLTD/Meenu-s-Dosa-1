@@ -5,7 +5,8 @@ export const siteConfig = {
   name: "Meenu's Dosa",
   tagline: '40-year heritage of crafting crispy dosas and soda-free fluffy idlis.',
   description: 'Authentic South Indian cuisine. Vegetarian. Indoor seating. Home delivery. Takeaway. Lunch & Dinner. Digital payments.',
-  apiUrl: process.env.NEXT_PUBLIC_API_URL || '',
+  apiUrl: process.env.NEXT_PUBLIC_API_URL || '/api',
+  baseUrl: process.env.NEXT_PUBLIC_API_URL || '/api',
   integrations: {
     whatsapp: 'https://linktr.ee/meenusdosa',
     zomato: 'https://www.zomato.com/bhopal/meenus-dosa-ayodhya-bypass/',
@@ -54,9 +55,96 @@ export const locations = [
   },
 ]
 
-export const menuService = { list: async () => menu, categories: async () => categories }
-export const bookingService = { create: async (payload: Record<string, unknown>) => { if (!siteConfig.apiUrl) return { ok: false, error: 'Booking API is not connected yet.' }; const response = await fetch(`${siteConfig.apiUrl}/bookings`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) }); return response.json() } }
-export const adminService = { listMenu: () => menuService.list(), createMenu: (payload: Partial<MenuItem>) => fetch(`${siteConfig.apiUrl}/menu`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) }), updateMenu: (id: string, payload: Partial<MenuItem>) => fetch(`${siteConfig.apiUrl}/menu/${id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) }), deleteMenu: (id: string) => fetch(`${siteConfig.apiUrl}/menu/${id}`, { method: 'DELETE' }) }
+export const menuService = {
+  list: async () => {
+    try {
+      const res = await fetch(`${siteConfig.baseUrl}/menu`)
+      const data = await res.json()
+      if (data.ok && Array.isArray(data.items)) return data.items
+    } catch {}
+    return menu
+  },
+  categories: async () => categories,
+}
+
+export const bookingService = {
+  create: async (payload: Record<string, unknown>) => {
+    try {
+      const res = await fetch(`${siteConfig.baseUrl}/bookings`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      })
+      const data = await res.json()
+      if (data.ok) return { ok: true, booking: data.booking }
+      return { ok: false, error: data.error || 'Booking failed' }
+    } catch {
+      return { ok: false, error: 'Network error. Please try again.' }
+    }
+  },
+}
+
+export const adminService = {
+  listMenu: async () => {
+    try {
+      const res = await fetch(`${siteConfig.baseUrl}/menu`)
+      const data = await res.json()
+      if (data.ok && Array.isArray(data.items)) return data.items
+    } catch {}
+    return menu
+  },
+  createMenu: (payload: Partial<MenuItem>) =>
+    fetch(`${siteConfig.baseUrl}/menu`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) }),
+  updateMenu: (id: string, payload: Partial<MenuItem>) =>
+    fetch(`${siteConfig.baseUrl}/menu`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id, ...payload }) }),
+  deleteMenu: (id: string) => fetch(`${siteConfig.baseUrl}/menu?id=${encodeURIComponent(id)}`, { method: 'DELETE' }),
+  listOrders: async () => {
+    try {
+      const res = await fetch(`${siteConfig.baseUrl}/orders`)
+      const data = await res.json()
+      if (data.ok && Array.isArray(data.orders)) return data.orders
+    } catch {}
+    return []
+  },
+  updateOrder: (id: string, updates: Record<string, unknown>) =>
+    fetch(`${siteConfig.baseUrl}/orders`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id, ...updates }) }),
+  deleteOrder: (id: string) => fetch(`${siteConfig.baseUrl}/orders?id=${encodeURIComponent(id)}`, { method: 'DELETE' }),
+  createOrder: (payload: Record<string, unknown>) =>
+    fetch(`${siteConfig.baseUrl}/orders`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) }),
+  listBookings: async () => {
+    try {
+      const res = await fetch(`${siteConfig.baseUrl}/bookings`)
+      const data = await res.json()
+      if (data.ok && Array.isArray(data.bookings)) return data.bookings
+    } catch {}
+    return []
+  },
+  updateBooking: (id: string, status: string) =>
+    fetch(`${siteConfig.baseUrl}/bookings`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id, status }) }),
+  deleteBooking: (id: string) => fetch(`${siteConfig.baseUrl}/bookings?id=${encodeURIComponent(id)}`, { method: 'DELETE' }),
+  listLocations: async () => {
+    try {
+      const res = await fetch(`${siteConfig.baseUrl}/locations`)
+      const data = await res.json()
+      if (data.ok && Array.isArray(data.locations)) return data.locations
+    } catch {}
+    return locations
+  },
+  createLocation: (payload: Record<string, unknown>) =>
+    fetch(`${siteConfig.baseUrl}/locations`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) }),
+  deleteLocation: (id: string) => fetch(`${siteConfig.baseUrl}/locations?id=${encodeURIComponent(id)}`, { method: 'DELETE' }),
+  saveContent: (payload: Record<string, unknown>) =>
+    fetch(`${siteConfig.baseUrl}/content`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) }),
+  getContent: async () => {
+    try {
+      const res = await fetch(`${siteConfig.baseUrl}/content`)
+      const data = await res.json()
+      if (data.ok && data.content) return data.content
+    } catch {}
+    return null
+  },
+}
+
 export const categoryImage = (image: string) => `/images/categories/${image}`
 export const formatPrice = (price?: number) => price === undefined ? 'Price on request' : `₹${price}`
 export const getIntegrationHref = (value: string, fallback: string) => value || fallback

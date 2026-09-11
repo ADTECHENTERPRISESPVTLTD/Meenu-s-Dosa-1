@@ -4,16 +4,8 @@ import { useMemo, useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { LogOut, Pencil, Plus, Trash2, X, Calendar, MapPin, Globe, LayoutDashboard, ShoppingBag, BookUser, Map, FileText, Settings, ShieldCheck, TrendingUp, DollarSign, Package, Clock, ChevronRight, Image } from 'lucide-react'
-import { menu as initialMenu, categories, formatPrice, siteConfig, type MenuItem, categoryImage } from '@/lib/data'
+import { menu as initialMenu, categories, formatPrice, siteConfig, type MenuItem, categoryImage, adminService } from '@/lib/data'
 import { Shell } from '@/components/site-shell'
-
-const ADMIN_EMAIL = ''
-const ADMIN_PASSWORD = ''
-const SESSION_KEY = ''
-const ORDER_HISTORY_KEY = 'meenu-dosa-orders'
-const BOOKINGS_KEY = 'meenu-dosa-bookings'
-const LOCATIONS_KEY = 'meenu-dosa-locations'
-const CONTENT_KEY = 'meenu-dosa-content'
 
 type Tab = 'dashboard' | 'orders' | 'bookings' | 'menu' | 'locations' | 'content' | 'settings'
 type OrderStatus = 'pending' | 'confirmed' | 'preparing' | 'ready' | 'delivered' | 'cancelled'
@@ -50,7 +42,7 @@ const STATUS_COLORS: Record<OrderStatus, string> = {
 export default function AdminDashboard() {
   const router = useRouter()
   const [tab, setTab] = useState<Tab>('dashboard')
-  const [menuItems, setMenuItems] = useState(initialMenu)
+  const [menuItems, setMenuItems] = useState<MenuItem[]>(initialMenu)
   const [showForm, setShowForm] = useState(false)
   const [editing, setEditing] = useState<MenuItem | null>(null)
   const [form, setForm] = useState({ name: '', category: categories[0]?.id ?? '', price: '' })
@@ -65,100 +57,110 @@ export default function AdminDashboard() {
   const [contentSaving, setContentSaving] = useState(false)
 
   useEffect(() => {
-    try {
-      const stored = localStorage.getItem(ORDER_HISTORY_KEY)
-      if (stored) setOrders(JSON.parse(stored))
-    } catch {}
+    let cancelled = false
+    const load = async () => {
+      try {
+        const [menuRes, ordersRes, bookingsRes, locRes, contentRes] = await Promise.all([
+          adminService.listMenu(),
+          adminService.listOrders(),
+          adminService.listBookings(),
+          adminService.listLocations(),
+          adminService.getContent(),
+        ])
+        if (cancelled) return
+        if (Array.isArray(menuRes)) setMenuItems(menuRes)
+        if (Array.isArray(ordersRes)) setOrders(ordersRes)
+        if (Array.isArray(bookingsRes)) setBookings(bookingsRes)
+        if (Array.isArray(locRes)) setLocations(locRes)
+        if (contentRes) setContent((c) => ({ ...c, ...contentRes }))
+      } catch {}
+    }
+    load()
+    return () => { cancelled = true }
   }, [])
 
-  useEffect(() => {
-    try {
-      const stored = localStorage.getItem(BOOKINGS_KEY)
-      if (stored) setBookings(JSON.parse(stored))
-    } catch {}
-  }, [])
-
-  useEffect(() => {
-    try {
-      const stored = localStorage.getItem(LOCATIONS_KEY)
-      if (stored) setLocations(JSON.parse(stored))
-    } catch {}
-  }, [])
-
-  const logout = () => {
-    localStorage.removeItem(SESSION_KEY)
+  const persist = {
+    orders: (list: Order[]) => setOrders(list),
+    bookings: (list: any[]) => setBookings(list),
+    locations: (list: any[]) => setLocations(list),
   }
+
+  const logout = () => {}
 
   const updateOrderStatus = (orderId: string, status: OrderStatus) => {
     setOrders((current) => current.map((order) => order.id === orderId ? { ...order, status } : order))
-    try {
-      localStorage.setItem(ORDER_HISTORY_KEY, JSON.stringify(orders.map((order) => order.id === orderId ? { ...order, status } : order)))
-    } catch {}
+    adminService.updateOrder(orderId, { status })
   }
 
   const togglePaymentStatus = (orderId: string) => {
     setOrders((current) => current.map((order) => order.id === orderId ? { ...order, paid: !order.paid } : order))
-    try {
-      localStorage.setItem(ORDER_HISTORY_KEY, JSON.stringify(orders.map((order) => order.id === orderId ? { ...order, paid: !order.paid } : order)))
-    } catch {}
+    adminService.updateOrder(orderId, { paid: undefined } as any)
   }
 
   const deleteOrder = (orderId: string) => {
     if (window.confirm('Delete this order?')) {
       setOrders((current) => current.filter((order) => order.id !== orderId))
-      try {
-        localStorage.setItem(ORDER_HISTORY_KEY, JSON.stringify(orders.filter((order) => order.id !== orderId)))
-      } catch {}
+      adminService.deleteOrder(orderId)
     }
   }
 
-  const saveItem = (event: React.FormEvent) => {
+  const saveItem = async (event: React.FormEvent) => {
     event.preventDefault()
     const name = form.name.trim()
     const price = Number(form.price)
     if (!name || !Number.isFinite(price) || price <= 0) return
-    if (editing) {
-      setMenuItems((current) => current.map((item) => item.id === editing.id ? { ...item, name, category: form.category, price } : item))
-    } else {
-      setMenuItems((current) => [{ id: `draft-${Date.now()}`, name, category: form.category, price, vegetarian: true, available: true, image: categories.find((c) => c.id === form.category)?.image ?? '/images/categories/dosa.jpg' }, ...current])
+    try {
+      if (editing) {
+        const res = await adminService.updateMenu(editing.id, { name, category: form.category, price })
+        const data = await res.json()
+        if (data.ok) setMenuItems((current) => current.map((item) => item.id === editing.id ? { ...item, ...data.item } : item))
+      } else {
+        const res = await adminService.createMenu({ name, category: form.category, price, vegetarian: true, available: true, image: categories.find((c) => c.id === form.category)?.image ?? '' })
+        const data = await res.json()
+        if (data.ok) setMenuItems((current) => [data.item, ...current])
+      }
+      setShowForm(false)
+    } catch {}
+  }
+
+  const deleteItem = async (item: MenuItem) => {
+    if (window.confirm(`Delete ${item.name}?`)) {
+      setMenuItems((current) => current.filter((entry) => entry.id !== item.id))
+      adminService.deleteMenu(item.id)
     }
-    setShowForm(false)
   }
 
-  const deleteItem = (item: MenuItem) => {
-    if (window.confirm(`Delete ${item.name}?`)) setMenuItems((current) => current.filter((entry) => entry.id !== item.id))
-  }
-
-  const updateBookingStatus = (bookingId: string, status: string) => {
+  const updateBookingStatus = async (bookingId: string, status: string) => {
     setBookings((current) => current.map((booking) => booking.id === bookingId ? { ...booking, status } : booking))
-    try { localStorage.setItem(BOOKINGS_KEY, JSON.stringify(bookings.map((booking) => booking.id === bookingId ? { ...booking, status } : booking))) } catch {}
+    await adminService.updateBooking(bookingId, status)
   }
 
   const deleteBooking = (bookingId: string) => {
     if (window.confirm('Delete this booking?')) {
       setBookings((current) => current.filter((booking) => booking.id !== bookingId))
-      try { localStorage.setItem(BOOKINGS_KEY, JSON.stringify(bookings.filter((booking) => booking.id !== bookingId))) } catch {}
+      adminService.deleteBooking(bookingId)
     }
   }
 
-  const saveLocation = (event: React.FormEvent) => {
+  const saveLocation = async (event: React.FormEvent) => {
     event.preventDefault()
-    const name = (event.target as any).name.value.trim()
-    const address = (event.target as any).address.value.trim()
-    const phone = (event.target as any).phone.value.trim()
-    const hours = (event.target as any).hours.value.trim()
-    const mapsUrl = (event.target as any).mapsUrl.value.trim()
+    const target = event.target as HTMLFormElement
+    const name = (target.name as HTMLInputElement).value.trim()
+    const address = (target.address as HTMLInputElement).value.trim()
+    const phone = (target.phone as HTMLInputElement).value.trim()
+    const hours = (target.hours as HTMLInputElement).value.trim()
+    const mapsUrl = (target.mapsUrl as HTMLInputElement).value.trim()
     if (!name || !address) return
-    const entry = { id: `loc-${Date.now()}`, name, address, phone, hours, mapsUrl }
-    setLocations((current) => [...current, entry])
-    try { localStorage.setItem(LOCATIONS_KEY, JSON.stringify([...locations, entry])) } catch {}
-    ;(event.target as HTMLFormElement).reset()
+    const res = await adminService.createLocation({ name, address, phone, hours, mapsUrl })
+    const data = await res.json()
+    if (data.ok) setLocations((current) => [...current, data.location])
+    target.reset()
   }
 
   const deleteLocation = (locationId: string) => {
     if (window.confirm('Delete this location?')) {
       setLocations((current) => current.filter((loc) => loc.id !== locationId))
-      try { localStorage.setItem(LOCATIONS_KEY, JSON.stringify(locations.filter((loc) => loc.id !== locationId))) } catch {}
+      adminService.deleteLocation(locationId)
     }
   }
 
@@ -168,7 +170,6 @@ export default function AdminDashboard() {
     try {
       const formData = new FormData(event.target as HTMLFormElement)
       const updated = {
-        ...content,
         name: formData.get('name') as string,
         tagline: formData.get('tagline') as string,
         description: formData.get('description') as string,
@@ -178,8 +179,9 @@ export default function AdminDashboard() {
         zomato: formData.get('zomato') as string,
         swiggy: formData.get('swiggy') as string,
       }
-      setContent(updated)
-      try { localStorage.setItem(CONTENT_KEY, JSON.stringify(updated)) } catch {}
+      const res = await adminService.saveContent(updated)
+      const data = await res.json()
+      if (data.ok) setContent(data.content)
       alert('Content saved successfully')
     } catch {
       alert('Failed to save content')

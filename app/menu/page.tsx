@@ -2,11 +2,10 @@
 
 import { useMemo, useState, useEffect } from 'react'
 import { Minus, Plus, Search, ShoppingBag, SlidersHorizontal, Leaf, Trash2, ArrowUpRight, Bike, QrCode, Banknote } from 'lucide-react'
-import { categories, formatPrice, menu, type MenuItem } from '@/lib/data'
+import { categories, formatPrice, menu, type MenuItem, adminService } from '@/lib/data'
 import { CategoryImage, Shell } from '@/components/site-shell'
 
 const CART_STORAGE_KEY = 'meenu-dosa-cart'
-const ORDER_HISTORY_KEY = 'meenu-dosa-orders'
 
 type PaymentMethod = 'qr' | 'cash' | 'zomato' | 'swiggy'
 type OrderStatus = 'pending' | 'confirmed' | 'preparing' | 'ready' | 'delivered' | 'cancelled'
@@ -20,7 +19,7 @@ export default function MenuPage() {
   const [orderPlaced, setOrderPlaced] = useState(false)
   const [lastOrderId, setLastOrderId] = useState<string | null>(null)
 
-  const saveOrder = (method: PaymentMethod) => {
+  const saveOrder = async (method: PaymentMethod) => {
     if (cartCount === 0) return
     const order = {
       id: `ORD-${Date.now().toString(36).toUpperCase()}`,
@@ -32,10 +31,9 @@ export default function MenuPage() {
       status: 'pending' as OrderStatus,
     }
     try {
-      const existing = localStorage.getItem(ORDER_HISTORY_KEY)
-      const orders = existing ? JSON.parse(existing) : []
-      orders.unshift(order)
-      localStorage.setItem(ORDER_HISTORY_KEY, JSON.stringify(orders))
+      const res = await adminService.createOrder(order)
+      const data = await res.json()
+      if (data.ok && data.order) order.id = data.order.id
     } catch {}
     setLastOrderId(order.id)
     setOrderPlaced(true)
