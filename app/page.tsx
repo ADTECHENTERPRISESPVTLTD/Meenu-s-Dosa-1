@@ -1,9 +1,70 @@
+'use client'
+
+import { useEffect, useState } from 'react'
 import Link from 'next/link'
-import { ArrowRight, MapPin, Phone, Sparkles } from 'lucide-react'
-import { categories, locations, siteConfig } from '@/lib/data'
+import { ArrowRight, MapPin, Phone, Sparkles, Loader2 } from 'lucide-react'
+import { siteConfig, categoryImage } from '@/lib/data'
 import { CategoryImage, Shell } from '@/components/site-shell'
+import { categoryApi, locationApi } from '@/lib/api'
+
+interface Category {
+  id: string
+  name: string
+  image: string
+  description: string
+  slug?: string
+  sortOrder?: number
+  isActive?: boolean
+}
+
+interface Location {
+  id: string
+  name: string
+  address: string
+  phone: string
+  hours: string
+  mapsUrl?: string
+  zomatoUrl?: string
+  swiggyUrl?: string
+  isActive?: boolean
+}
 
 export default function Home() {
+  const [categories, setCategories] = useState<Category[]>([])
+  const [locations, setLocations] = useState<Location[]>([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const [catRes, locRes] = await Promise.all([
+          categoryApi.list(),
+          locationApi.list(),
+        ])
+        if (catRes.success) setCategories(catRes.data)
+        if (locRes.success) setLocations(locRes.data.filter((l: Location) => l.isActive))
+      } catch (err) {
+        console.error(err)
+      } finally {
+        setLoading(false)
+      }
+    }
+    fetchData()
+  }, [])
+
+  if (loading) {
+    return (
+      <Shell>
+        <div className="flex items-center justify-center min-h-[60vh]">
+          <Loader2 className="h-12 w-12 animate-spin text-primary" />
+        </div>
+      </Shell>
+    )
+  }
+
+  const firstLocation = locations[0]
+  const phone = firstLocation?.phone || '+91 6262 9555 05'
+
   return (
     <Shell>
       <section className="overflow-hidden">
@@ -18,20 +79,17 @@ export default function Home() {
             <p className="mt-5 max-w-lg text-base leading-7 text-muted-foreground">
               {siteConfig.description}
             </p>
-            <div className="mt-8 flex flex-wrap items-center gap-3">
-              <Link href="/order" className="inline-flex items-center gap-2 rounded-full bg-primary px-6 py-3.5 text-base font-bold text-primary-foreground shadow-sm">
+            <div className="mt-8 flex flex-col gap-3">
+              <Link href="/order" className="inline-flex items-center justify-center gap-2 rounded-full bg-primary px-6 py-4 text-base font-bold text-primary-foreground shadow-sm">
                 Order online <ArrowRight size={18}/>
               </Link>
-              <Link href="/book" className="inline-flex items-center gap-2 rounded-full border-2 border-foreground bg-background px-6 py-3.5 text-base font-bold text-foreground">
+              <Link href="/book" className="inline-flex items-center justify-center gap-2 rounded-full border-2 border-foreground bg-background px-6 py-4 text-base font-bold text-foreground">
                 Book a table
-              </Link>
-              <Link href="/locations" className="inline-flex items-center gap-2 rounded-full border px-6 py-3.5 text-base font-bold">
-                <MapPin size={16} /> Find an outlet
               </Link>
             </div>
             <div className="mt-8 flex flex-wrap gap-5 text-sm text-muted-foreground">
               <span className="inline-flex items-center gap-2"><MapPin size={16} className="text-primary"/> Two outlets in Bhopal</span>
-              <span className="inline-flex items-center gap-2"><Phone size={16} className="text-primary"/> +91 6262 9555 05</span>
+              <span className="inline-flex items-center gap-2"><Phone size={16} className="text-primary"/> {phone}</span>
             </div>
           </div>
           <div className="relative">
@@ -55,7 +113,7 @@ export default function Home() {
           <Link href="/menu" className="text-sm font-bold underline underline-offset-4">Explore full menu <ArrowRight className="inline" size={16}/></Link>
         </div>
         <div className="mt-8 grid grid-cols-2 gap-3 sm:grid-cols-4 md:gap-5">
-          {categories.map((category, index) => (
+          {categories.slice(0, 6).map((category, index) => (
             <Link href={`/menu#${category.id}`} key={category.id} className={`group relative overflow-hidden rounded-2xl ${index === 0 ? 'col-span-2 row-span-2 aspect-square sm:aspect-auto' : ''} aspect-[1.15]`}>
               <CategoryImage src={category.image} alt={category.name} className="h-full w-full object-cover transition duration-500 group-hover:scale-105"/>
               <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/10 to-transparent"/>

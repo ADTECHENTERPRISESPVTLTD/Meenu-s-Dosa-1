@@ -4,24 +4,28 @@ import { useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { Shell } from '@/components/site-shell'
+import { useAdminAuth } from '@/lib/auth-context'
 
 export default function AdminLogin() {
   const router = useRouter()
+  const { login } = useAdminAuth()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
 
-  const handleSubmit = (event: React.FormEvent) => {
+  const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault()
     setError('')
     setLoading(true)
-    setTimeout(() => {
-      try {
-        localStorage.setItem('meenu-dosa-admin-session', JSON.stringify({ email: email || 'admin@meenusdosa.com', loggedInAt: Date.now() }))
-      } catch {}
+    try {
+      await login(email, password)
       router.replace('/admin')
-    }, 300)
+    } catch (err: any) {
+      setError(err.message || 'Invalid email or password')
+    } finally {
+      setLoading(false)
+    }
   }
 
   const handleSkip = () => {
@@ -37,7 +41,7 @@ export default function AdminLogin() {
         <div className="mx-auto max-w-md">
           <p className="text-sm font-bold uppercase tracking-[.2em] text-primary">Admin access</p>
           <h1 className="mt-3 text-5xl font-black tracking-tight sm:text-7xl">Sign in</h1>
-          <p className="mt-4 text-sm text-muted-foreground">Enter credentials to continue, or skip directly to the dashboard.</p>
+          <p className="mt-4 text-sm text-muted-foreground">Enter your admin credentials to access the dashboard.</p>
 
           <form onSubmit={handleSubmit} className="mt-8 flex flex-col gap-4">
             <label className="flex flex-col gap-2">
@@ -48,6 +52,7 @@ export default function AdminLogin() {
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="admin@meenusdosa.com"
                 className="h-12 rounded-2xl border bg-background px-4 outline-none focus:ring-2 focus:ring-primary"
+                required
               />
             </label>
             <label className="flex flex-col gap-2">
@@ -58,6 +63,7 @@ export default function AdminLogin() {
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="Enter password"
                 className="h-12 rounded-2xl border bg-background px-4 outline-none focus:ring-2 focus:ring-primary"
+                required
               />
             </label>
             {error && <p className="text-sm text-destructive">{error}</p>}
@@ -76,7 +82,7 @@ export default function AdminLogin() {
               onClick={handleSkip}
               className="w-fit rounded-full border-2 border-foreground bg-background px-6 py-3 text-sm font-bold text-foreground"
             >
-              Skip — enter dashboard
+              Skip - enter dashboard
             </button>
           </div>
 

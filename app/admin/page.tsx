@@ -3,13 +3,22 @@
 import { useMemo, useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { LogOut, Pencil, Plus, Trash2, X, Calendar, MapPin, Globe, LayoutDashboard, ShoppingBag, BookUser, Map, FileText, Settings, ShieldCheck, TrendingUp, DollarSign, Package, Clock, ChevronRight, Image } from 'lucide-react'
-import { menu as initialMenu, categories, formatPrice, siteConfig, type MenuItem, categoryImage, adminService } from '@/lib/data'
+import { LogOut, Pencil, Plus, Trash2, X, Calendar, MapPin, Globe, Loader2 } from 'lucide-react'
+import { formatPrice, siteConfig, type Category, type MenuItem } from '@/lib/data'
 import { Shell } from '@/components/site-shell'
+import { adminApi, categoryApi } from '@/lib/api'
+import { useAdminAuth } from '@/lib/auth-context'
+
+const SESSION_KEY = 'meenu-dosa-admin-session'
+const ORDER_HISTORY_KEY = 'meenu-dosa-orders'
+const BOOKINGS_KEY = 'meenu-dosa-bookings'
+const LOCATIONS_KEY = 'meenu-dosa-locations'
+const CONTENT_KEY = 'meenu-dosa-content'
 
 type Tab = 'dashboard' | 'orders' | 'bookings' | 'menu' | 'locations' | 'content' | 'settings'
 type OrderStatus = 'pending' | 'confirmed' | 'preparing' | 'ready' | 'delivered' | 'cancelled'
 type PaymentMethod = 'qr' | 'cash' | 'zomato' | 'swiggy'
+type BookingStatus = 'pending' | 'confirmed' | 'cancelled'
 
 interface OrderItem {
   id: string
@@ -30,6 +39,7 @@ interface Order {
 }
 
 const STATUS_OPTIONS: OrderStatus[] = ['pending', 'confirmed', 'preparing', 'ready', 'delivered', 'cancelled']
+const BOOKING_STATUS_OPTIONS = ['pending', 'confirmed', 'rejected', 'completed', 'cancelled']
 const STATUS_COLORS: Record<OrderStatus, string> = {
   pending: 'bg-yellow-500/15 text-yellow-700',
   confirmed: 'bg-blue-500/15 text-blue-700',
@@ -39,13 +49,43 @@ const STATUS_COLORS: Record<OrderStatus, string> = {
   cancelled: 'bg-destructive/15 text-destructive',
 }
 
+function normalizeMenuItem(item: any): MenuItem {
+  return {
+    id: item._id || item.id,
+    name: item.name,
+    price: item.price,
+    description: item.description,
+    category: typeof item.category === 'string' ? item.category : item.category?._id || item.category?.id || '',
+    available: item.isAvailable ?? item.available ?? true,
+    vegetarian: item.isVegetarian ?? item.vegetarian ?? true,
+    image: item.image || '',
+    isFeatured: item.isFeatured,
+    sortOrder: item.sortOrder,
+  }
+}
+
+function normalizeCategory(category: any): Category {
+  return {
+    id: category._id || category.id,
+    name: category.name,
+    image: category.image || '',
+    description: category.description || '',
+    slug: category.slug,
+    sortOrder: category.sortOrder,
+    isActive: category.isActive,
+  }
+}
+
 export default function AdminDashboard() {
   const router = useRouter()
+  const { admin, token, loading: authLoading, logout, refresh } = useAdminAuth()
+  const canManageIntegrations = admin?.role === 'super_admin' || admin?.role === 'admin'
   const [tab, setTab] = useState<Tab>('dashboard')
-  const [menuItems, setMenuItems] = useState<MenuItem[]>(initialMenu)
+  const [menuItems, setMenuItems] = useState<MenuItem[]>([])
+  const [categories, setCategories] = useState<Category[]>([])
   const [showForm, setShowForm] = useState(false)
   const [editing, setEditing] = useState<MenuItem | null>(null)
-  const [form, setForm] = useState({ name: '', category: categories[0]?.id ?? '', price: '' })
+  const [form, setForm] = useState({ name: '', category: '', price: '' })
   const [orders, setOrders] = useState<Order[]>([])
   const [orderFilter, setOrderFilter] = useState<'all' | 'direct' | 'zomato' | 'swiggy'>('all')
   const [statusFilter, setStatusFilter] = useState<'all' | OrderStatus>('all')
@@ -55,52 +95,87 @@ export default function AdminDashboard() {
   const [locations, setLocations] = useState<any[]>([])
   const [content, setContent] = useState({ name: siteConfig.name, tagline: siteConfig.tagline, description: siteConfig.description, phone: '', whatsapp: '', instagram: '', zomato: siteConfig.integrations.zomato, swiggy: siteConfig.integrations.swiggy })
   const [contentSaving, setContentSaving] = useState(false)
+  const [loading, setLoading] = useState(true)
+  const [saving, setSaving] = useState(false)
 
   useEffect(() => {
-    let cancelled = false
-    const load = async () => {
-      try {
-        const [menuRes, ordersRes, bookingsRes, locRes, contentRes] = await Promise.all([
-          adminService.listMenu(),
-          adminService.listOrders(),
-          adminService.listBookings(),
-          adminService.listLocations(),
-          adminService.getContent(),
-        ])
-        if (cancelled) return
-        if (Array.isArray(menuRes)) setMenuItems(menuRes)
-        if (Array.isArray(ordersRes)) setOrders(ordersRes)
-        if (Array.isArray(bookingsRes)) setBookings(bookingsRes)
-        if (Array.isArray(locRes)) setLocations(locRes)
-        if (contentRes) setContent((c) => ({ ...c, ...contentRes }))
-      } catch {}
+    if (!authLoading && !token) {
+      router.replace('/admin/login')
     }
-    load()
-    return () => { cancelled = true }
-  }, [])
+  }, [authLoading, token, router])
 
-  const persist = {
-    orders: (list: Order[]) => setOrders(list),
-    bookings: (list: any[]) => setBookings(list),
-    locations: (list: any[]) => setLocations(list),
+  const fetchDashboardData = async () => {
+    const requests = await Promise.allSettled([
+      adminApi.menu.list(),
+      adminApi.bookings.list(),
+      adminApi.locations.list(),
+      categoryApi.list(true),
+      adminApi.orders.list(),
+      adminApi.settings.get(),
+      adminApi.settings.getIntegrations(),
+    ])
+
+    const [menuResult, bookingsResult, locationsResult, categoriesResult, ordersResult, settingsResult, integrationsResult] = requests
+    if (menuResult.status === 'fulfilled' && menuResult.value.success) setMenuItems(menuResult.value.data.map(normalizeMenuItem))
+    if (bookingsResult.status === 'fulfilled' && bookingsResult.value.success) {
+      setBookings(bookingsResult.value.data.bookings.map((booking: any) => ({ ...booking, id: booking._id || booking.id })))
+    }
+    if (locationsResult.status === 'fulfilled' && locationsResult.value.success) {
+      setLocations(locationsResult.value.data.map((location: any) => ({ ...location, id: location._id || location.id })))
+    }
+    if (categoriesResult.status === 'fulfilled' && categoriesResult.value.success) setCategories(categoriesResult.value.data.map(normalizeCategory))
+    if (ordersResult.status === 'fulfilled' && ordersResult.value.success) {
+      setOrders(ordersResult.value.data.map((order: any) => ({
+          ...order,
+          id: order._id || order.id,
+          date: new Date(order.createdAt || order.date).getTime(),
+          items: order.items.map((item: any) => ({ ...item, id: item.menuItem || item.id })),
+        })))
+    }
+    if (settingsResult.status === 'fulfilled' && settingsResult.value.success) {
+        const settings = settingsResult.value.data
+        setContent((current) => ({ ...current, name: settings.restaurantName || current.name, description: settings.description || '', phone: settings.phone || '', whatsapp: settings.whatsapp || '', instagram: settings.instagram || '', zomato: settings.zomato || '', swiggy: settings.swiggy || '' }))
+    }
+    if (integrationsResult.status === 'fulfilled' && integrationsResult.value.success) {
+        const integrations = integrationsResult.value.data
+        setContent((current) => ({ ...current, whatsapp: integrations.whatsappNumber || current.whatsapp, zomato: integrations.zomatoUrl || current.zomato, swiggy: integrations.swiggyUrl || current.swiggy }))
+    }
+    setLoading(false)
   }
 
-  const logout = () => {}
+  useEffect(() => {
+    if (token) {
+      fetchDashboardData()
+    }
+  }, [token])
 
-  const updateOrderStatus = (orderId: string, status: OrderStatus) => {
-    setOrders((current) => current.map((order) => order.id === orderId ? { ...order, status } : order))
-    adminService.updateOrder(orderId, { status })
+  const logoutHandler = () => {
+    logout()
+    router.replace('/admin/login')
   }
 
-  const togglePaymentStatus = (orderId: string) => {
-    setOrders((current) => current.map((order) => order.id === orderId ? { ...order, paid: !order.paid } : order))
-    adminService.updateOrder(orderId, { paid: undefined } as any)
+  const updateOrderStatus = async (orderId: string, status: OrderStatus) => {
+    try {
+      const response = await adminApi.orders.update(orderId, { status })
+      if (response.success) setOrders((current) => current.map((order) => order.id === orderId ? { ...order, status } : order))
+    } catch { alert('Failed to update order status') }
   }
 
-  const deleteOrder = (orderId: string) => {
+  const togglePaymentStatus = async (orderId: string) => {
+    const order = orders.find((entry) => entry.id === orderId)
+    if (!order) return
+    try {
+      const response = await adminApi.orders.update(orderId, { paid: !order.paid })
+      if (response.success) setOrders((current) => current.map((entry) => entry.id === orderId ? { ...entry, paid: !entry.paid } : entry))
+    } catch { alert('Failed to update payment status') }
+  }
+
+  const deleteOrder = async (orderId: string) => {
     if (window.confirm('Delete this order?')) {
-      setOrders((current) => current.filter((order) => order.id !== orderId))
-      adminService.deleteOrder(orderId)
+      try {
+        const response = await adminApi.orders.delete(orderId)
+        if (response.success) setOrders((current) => current.filter((order) => order.id !== orderId))
+      } catch { alert('Failed to delete order') }
     }
   }
 
@@ -109,58 +184,112 @@ export default function AdminDashboard() {
     const name = form.name.trim()
     const price = Number(form.price)
     if (!name || !Number.isFinite(price) || price <= 0) return
+
+    setSaving(true)
     try {
       if (editing) {
-        const res = await adminService.updateMenu(editing.id, { name, category: form.category, price })
-        const data = await res.json()
-        if (data.ok) setMenuItems((current) => current.map((item) => item.id === editing.id ? { ...item, ...data.item } : item))
+        const res = await adminApi.menu.update(editing.id, { name, category: form.category, price })
+        if (res.success) {
+          setMenuItems((current) => current.map((item) => item.id === editing.id ? { ...item, name, category: form.category, price } : item))
+        }
       } else {
-        const res = await adminService.createMenu({ name, category: form.category, price, vegetarian: true, available: true, image: categories.find((c) => c.id === form.category)?.image ?? '' })
-        const data = await res.json()
-        if (data.ok) setMenuItems((current) => [data.item, ...current])
+        const res = await adminApi.menu.create({ name, category: form.category, price, isAvailable: true, isVegetarian: true })
+        if (res.success) {
+          setMenuItems((current) => [normalizeMenuItem(res.data), ...current])
+        }
       }
       setShowForm(false)
-    } catch {}
+    } catch (err) {
+      console.error(err)
+      alert('Failed to save menu item')
+    } finally {
+      setSaving(false)
+    }
   }
 
   const deleteItem = async (item: MenuItem) => {
     if (window.confirm(`Delete ${item.name}?`)) {
-      setMenuItems((current) => current.filter((entry) => entry.id !== item.id))
-      adminService.deleteMenu(item.id)
+      try {
+        const res = await adminApi.menu.delete(item.id)
+        if (res.success) {
+          setMenuItems((current) => current.filter((entry) => entry.id !== item.id))
+        }
+      } catch (err) {
+        console.error(err)
+        alert('Failed to delete menu item')
+      }
+    }
+  }
+
+  const toggleAvailability = async (item: MenuItem) => {
+    try {
+      const res = await adminApi.menu.update(item.id, { isAvailable: !item.available })
+      if (res.success) {
+        setMenuItems((current) => current.map((entry) => entry.id === item.id ? { ...entry, available: !entry.available } : entry))
+      }
+    } catch (err) {
+      console.error(err)
+      alert('Failed to update availability')
     }
   }
 
   const updateBookingStatus = async (bookingId: string, status: string) => {
-    setBookings((current) => current.map((booking) => booking.id === bookingId ? { ...booking, status } : booking))
-    await adminService.updateBooking(bookingId, status)
+    try {
+      const res = await adminApi.bookings.updateStatus(bookingId, status)
+      if (res.success) {
+        setBookings((current) => current.map((booking) => booking.id === bookingId ? { ...booking, status } : booking))
+      }
+    } catch (err) {
+      console.error(err)
+      alert('Failed to update booking status')
+    }
   }
 
-  const deleteBooking = (bookingId: string) => {
+  const deleteBooking = async (bookingId: string) => {
     if (window.confirm('Delete this booking?')) {
-      setBookings((current) => current.filter((booking) => booking.id !== bookingId))
-      adminService.deleteBooking(bookingId)
+      try {
+        const response = await adminApi.bookings.delete(bookingId)
+        if (response.success) setBookings((current) => current.filter((booking) => booking.id !== bookingId))
+      } catch { alert('Failed to delete booking') }
     }
   }
 
   const saveLocation = async (event: React.FormEvent) => {
     event.preventDefault()
-    const target = event.target as HTMLFormElement
-    const name = (target.name as HTMLInputElement).value.trim()
-    const address = (target.address as HTMLInputElement).value.trim()
-    const phone = (target.phone as HTMLInputElement).value.trim()
-    const hours = (target.hours as HTMLInputElement).value.trim()
-    const mapsUrl = (target.mapsUrl as HTMLInputElement).value.trim()
+    const name = (event.target as any).name.value.trim()
+    const address = (event.target as any).address.value.trim()
+    const phone = (event.target as any).phone.value.trim()
+    const hours = (event.target as any).hours.value.trim()
+    const mapsUrl = (event.target as any).mapsUrl.value.trim()
     if (!name || !address) return
-    const res = await adminService.createLocation({ name, address, phone, hours, mapsUrl })
-    const data = await res.json()
-    if (data.ok) setLocations((current) => [...current, data.location])
-    target.reset()
+
+    setSaving(true)
+    try {
+      const res = await adminApi.locations.create({ name, address, phone, hours, mapsUrl, isActive: true })
+      if (res.success) {
+        const entry = { ...res.data, id: res.data._id || res.data.id }
+        setLocations((current) => [...current, entry])
+      }
+      ;(event.target as HTMLFormElement).reset()
+    } catch (err) {
+      console.error(err)
+      alert('Failed to save location')
+    } finally {
+      setSaving(false)
+    }
   }
 
-  const deleteLocation = (locationId: string) => {
+  const deleteLocation = async (locationId: string) => {
     if (window.confirm('Delete this location?')) {
-      setLocations((current) => current.filter((loc) => loc.id !== locationId))
-      adminService.deleteLocation(locationId)
+      try {
+        const res = await adminApi.locations.delete(locationId)
+        if (res.success) {
+          setLocations((current) => current.filter((loc) => loc.id !== locationId))
+        }
+      } catch (err) {
+        console.error(err)
+        alert('Failed to delete location')
+      }
     }
   }
 
@@ -170,6 +299,7 @@ export default function AdminDashboard() {
     try {
       const formData = new FormData(event.target as HTMLFormElement)
       const updated = {
+        ...content,
         name: formData.get('name') as string,
         tagline: formData.get('tagline') as string,
         description: formData.get('description') as string,
@@ -179,9 +309,25 @@ export default function AdminDashboard() {
         zomato: formData.get('zomato') as string,
         swiggy: formData.get('swiggy') as string,
       }
-      const res = await adminService.saveContent(updated)
-      const data = await res.json()
-      if (data.ok) setContent(data.content)
+      const settingsRes = await adminApi.settings.update({
+        restaurantName: updated.name,
+        description: updated.description,
+        phone: updated.phone,
+        whatsapp: updated.whatsapp,
+        instagram: updated.instagram,
+        zomato: updated.zomato,
+        swiggy: updated.swiggy,
+      })
+      if (!settingsRes.success) throw new Error('Settings update failed')
+      if (canManageIntegrations) {
+        const integrationsRes = await adminApi.settings.updateIntegrations({
+          whatsappNumber: updated.whatsapp,
+          zomatoUrl: updated.zomato,
+          swiggyUrl: updated.swiggy,
+        })
+        if (!integrationsRes.success) throw new Error('Integration settings update failed')
+      }
+      setContent(updated)
       alert('Content saved successfully')
     } catch {
       alert('Failed to save content')
@@ -226,139 +372,81 @@ export default function AdminDashboard() {
     const totalRevenue = revenueStats.totalRevenue
     const totalItems = menuItems.length
     const availableItems = menuItems.filter((item) => item.available).length
+    const pendingBookings = bookings.filter((b: any) => b.status === 'pending').length
+    const confirmedBookings = bookings.filter((b: any) => b.status === 'confirmed').length
     return [
       { label: 'Total orders', value: String(totalOrders), change: 'Lifetime' },
       { label: 'Revenue', value: formatPrice(totalRevenue), change: 'All time' },
       { label: 'Collected', value: formatPrice(revenueStats.collectedRevenue), change: 'Paid orders' },
       { label: 'Pending payment', value: formatPrice(revenueStats.pendingRevenue), change: 'Unpaid orders' },
       { label: 'Menu items', value: `${availableItems}/${totalItems}`, change: 'Active/total' },
+      { label: 'Pending bookings', value: String(pendingBookings), change: 'Awaiting confirmation' },
+      { label: 'Confirmed bookings', value: String(confirmedBookings), change: 'Approved' },
       { label: 'Zomato orders', value: String(revenueStats.zomatoOrders), change: 'Via Zomato' },
       { label: 'Swiggy orders', value: String(revenueStats.swiggyOrders), change: 'Via Swiggy' },
       { label: 'Direct orders', value: String(revenueStats.directOrders), change: 'In-restaurant' },
     ]
-  }, [orders, menuItems, revenueStats])
+  }, [orders, menuItems, revenueStats, bookings])
+
+  if (authLoading || loading) {
+    return (
+      <Shell>
+        <main className="min-h-screen bg-muted/40 flex items-center justify-center">
+          <Loader2 className="h-12 w-12 animate-spin text-primary" />
+        </main>
+      </Shell>
+    )
+  }
 
   return (
     <Shell>
       <main className="min-h-screen bg-muted/40">
         <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6">
-          <div className="grid gap-6 lg:grid-cols-[260px_1fr]">
-            {/* Sidebar */}
-            <aside className="space-y-6">
-              <div className="rounded-3xl border bg-card p-5">
-                <div className="flex items-center gap-3">
-                  <div className="grid size-12 place-items-center rounded-2xl bg-gradient-to-br from-primary to-orange-500 text-xl font-black text-white shadow-lg">M</div>
-                  <div className="min-w-0">
-                    <p className="truncate font-black">{siteConfig.name}</p>
-                    <p className="text-xs text-muted-foreground">Admin control panel</p>
-                  </div>
+          <div className="flex flex-col justify-between gap-5 sm:flex-row sm:items-center">
+            <div>
+              <p className="text-sm font-bold uppercase tracking-[.2em] text-primary">Admin dashboard</p>
+              <h1 className="mt-2 text-3xl font-black tracking-tight sm:text-4xl">Admin panel</h1>
+              <p className="mt-2 max-w-xl text-sm text-muted-foreground">Manage orders, track revenue, and update your menu.</p>
+            </div>
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+              <Link href="/" className="text-sm font-bold underline underline-offset-4">View website</Link>
+              <button onClick={logoutHandler} className="inline-flex items-center justify-center gap-2 rounded-full border px-4 py-2 text-sm font-bold">
+                <LogOut size={16}/> Logout
+              </button>
+            </div>
+          </div>
+
+          <nav className="mt-8 flex gap-2 overflow-x-auto border-b pb-3 -mx-4 px-4 sm:mx-0 sm:px-0">
+            {([
+              ['dashboard', 'Dashboard'],
+              ['orders', 'Orders'],
+              ['bookings', 'Bookings'],
+              ['menu', 'Menu'],
+              ['locations', 'Locations'],
+              ['content', 'Content'],
+              ['settings', 'Settings'],
+            ] as const).map(([key, label]) => (
+              <button
+                key={key}
+                onClick={() => setTab(key)}
+                className={`whitespace-nowrap rounded-full px-4 py-2 text-sm font-bold transition ${tab === key ? 'bg-primary text-primary-foreground' : 'hover:bg-muted'}`}
+              >
+                {label}
+              </button>
+            ))}
+          </nav>
+
+          {tab === 'dashboard' && (
+            <section className="mt-8 grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-5">
+              {stats.map((stat) => (
+                <div key={stat.label} className="rounded-2xl border bg-card p-5">
+                  <p className="text-sm text-muted-foreground">{stat.label}</p>
+                  <p className="mt-2 text-3xl font-black">{stat.value}</p>
+                  <p className="mt-1 text-xs text-muted-foreground">{stat.change}</p>
                 </div>
-                <div className="mt-4 grid grid-cols-2 gap-2">
-                  <div className="rounded-2xl bg-primary/10 p-3 text-center">
-                    <p className="text-lg font-black text-primary">{revenueStats.totalOrders}</p>
-                    <p className="text-[10px] font-bold uppercase tracking-wide text-muted-foreground">Orders</p>
-                  </div>
-                  <div className="rounded-2xl bg-primary/10 p-3 text-center">
-                    <p className="text-lg font-black text-primary">{formatPrice(revenueStats.collectedRevenue)}</p>
-                    <p className="text-[10px] font-bold uppercase tracking-wide text-muted-foreground">Collected</p>
-                  </div>
-                </div>
-              </div>
-
-              <nav className="flex flex-col gap-1">
-                {([
-                  ['dashboard', LayoutDashboard, 'Dashboard'],
-                  ['orders', ShoppingBag, 'Orders'],
-                  ['bookings', BookUser, 'Bookings'],
-                  ['menu', Image, 'Menu'],
-                  ['locations', Map, 'Locations'],
-                  ['content', FileText, 'Content'],
-                  ['settings', Settings, 'Settings'],
-                ] as const).map(([key, Icon, label]) => (
-                  <button
-                    key={key}
-                    onClick={() => setTab(key)}
-                    className={`group flex items-center gap-3 rounded-2xl px-4 py-3 text-left text-sm font-bold transition ${
-                      tab === key
-                        ? 'bg-primary text-primary-foreground shadow-lg shadow-primary/25'
-                        : 'hover:bg-muted'
-                    }`}
-                  >
-                    <Icon size={18} className={tab === key ? 'text-primary-foreground' : 'text-muted-foreground group-hover:text-foreground'} />
-                    <span className="flex-1">{label}</span>
-                    {key === 'orders' && revenueStats.unpaidOrders > 0 && (
-                      <span className="grid size-6 place-items-center rounded-full bg-amber-500 text-[10px] font-black text-white">
-                        {revenueStats.unpaidOrders}
-                      </span>
-                    )}
-                    <ChevronRight size={16} className={tab === key ? 'text-primary-foreground/70' : 'text-muted-foreground'} />
-                  </button>
-                ))}
-              </nav>
-
-              <div className="rounded-3xl border bg-card p-5">
-                <p className="text-xs font-bold uppercase tracking-[.15em] text-muted-foreground">Quick actions</p>
-                <div className="mt-3 flex flex-col gap-2">
-                  <Link href="/" className="inline-flex items-center gap-2 rounded-xl border px-3 py-2 text-sm font-bold hover:bg-muted">
-                    <Globe size={14} /> View website
-                  </Link>
-                  <button onClick={logout} className="inline-flex items-center gap-2 rounded-xl border px-3 py-2 text-sm font-bold text-destructive hover:bg-destructive/10">
-                    <LogOut size={14} /> Logout
-                  </button>
-                </div>
-              </div>
-            </aside>
-
-            {/* Main content */}
-            <div className="min-w-0">
-              <div className="mb-6">
-                <p className="text-sm font-bold uppercase tracking-[.2em] text-primary">Admin dashboard</p>
-                <h1 className="mt-2 text-3xl font-black tracking-tight sm:text-4xl">
-                  {tab === 'dashboard' && 'Dashboard'}
-                  {tab === 'orders' && 'Order management'}
-                  {tab === 'bookings' && 'Booking management'}
-                  {tab === 'menu' && 'Menu management'}
-                  {tab === 'locations' && 'Location management'}
-                  {tab === 'content' && 'Content management'}
-                  {tab === 'settings' && 'Settings'}
-                </h1>
-                <p className="mt-2 max-w-xl text-sm text-muted-foreground">
-                  {tab === 'dashboard' && 'Track revenue, orders, and menu performance at a glance.'}
-                  {tab === 'orders' && 'Track, update status, and manage all orders.'}
-                  {tab === 'bookings' && 'View and manage table reservations.'}
-                  {tab === 'menu' && 'Add, edit, delete and toggle availability.'}
-                  {tab === 'locations' && 'Add and manage restaurant locations.'}
-                  {tab === 'content' && 'Update website content and social links.'}
-                  {tab === 'settings' && 'Restaurant configuration and admin access.'}
-                </p>
-              </div>
-
-              {tab === 'dashboard' && (
-                <section className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
-                  {stats.map((stat, idx) => {
-                    const gradients = [
-                      'from-primary to-orange-500',
-                      'from-emerald-500 to-teal-500',
-                      'from-blue-500 to-indigo-500',
-                      'from-amber-500 to-yellow-500',
-                      'from-rose-500 to-pink-500',
-                      'from-violet-500 to-purple-500',
-                      'from-cyan-500 to-sky-500',
-                      'from-fuchsia-500 to-pink-500',
-                    ]
-                    return (
-                      <div key={stat.label} className="group relative overflow-hidden rounded-3xl border bg-card p-5">
-                        <div className={`absolute inset-0 bg-gradient-to-br ${gradients[idx % gradients.length]} opacity-[0.08]`} />
-                        <p className="text-sm font-semibold text-muted-foreground">{stat.label}</p>
-                        <p className="mt-2 text-3xl font-black">{stat.value}</p>
-                        <div className="mt-3 inline-flex items-center gap-1.5 rounded-full bg-muted px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-muted-foreground">
-                          <TrendingUp size={12} /> {stat.change}
-                        </div>
-                      </div>
-                    )
-                  })}
-                </section>
-              )}
+              ))}
+            </section>
+          )}
 
           {tab === 'orders' && (
             <section className="mt-8 rounded-3xl border bg-card p-5 sm:p-8">
@@ -453,7 +541,7 @@ export default function AdminDashboard() {
                   </select>
                   <input required min="1" step="1" value={form.price} onChange={(e) => setForm({ ...form, price: e.target.value })} placeholder="Price" type="number" className="h-11 rounded-xl border bg-background px-3"/>
                   <div className="flex gap-2">
-                    <button type="submit" className="flex-1 rounded-xl bg-primary px-4 py-3 text-sm font-bold text-primary-foreground">{editing ? 'Save' : 'Add'}</button>
+                    <button type="submit" disabled={saving} className="flex-1 rounded-xl bg-primary px-4 py-3 text-sm font-bold text-primary-foreground disabled:opacity-60">{saving ? (editing ? 'Saving...' : 'Adding...') : (editing ? 'Save' : 'Add')}</button>
                     <button type="button" onClick={() => setShowForm(false)} className="rounded-xl border p-3"><X size={18}/></button>
                   </div>
                 </form>
@@ -463,32 +551,39 @@ export default function AdminDashboard() {
                   <option value="all">All categories</option>
                   {categories.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
                 </select>
-</div>
-              <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                {menuItems.filter((item) => menuCategoryFilter === 'all' || item.category === menuCategoryFilter).slice(0, 12).map((item) => (
-                  <div key={item.id} className="overflow-hidden rounded-2xl border bg-card">
-                    <div className="relative aspect-[4/3] overflow-hidden bg-muted">
-                      <img src={categoryImage(item.image)} alt={item.name} className="h-full w-full object-cover" />
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
-                      <div className="absolute left-3 top-3">
-                        <span className={`rounded-full px-3 py-1 text-xs font-bold ${item.available ? 'bg-primary/90 text-primary-foreground' : 'bg-muted text-muted-foreground'}`}>
-                          {item.available ? 'Available' : 'Unavailable'}
-                        </span>
-                      </div>
-                    </div>
-                    <div className="p-4">
-                      <p className="font-black">{item.name}</p>
-                      <p className="mt-0.5 text-xs text-muted-foreground">{item.category}</p>
-                      <div className="mt-3 flex items-center justify-between">
-                        <p className="text-lg font-black text-primary">₹{item.price}</p>
-                        <div className="flex gap-2">
-                          <button onClick={() => { setEditing(item); setForm({ name: item.name, category: item.category, price: String(item.price) }); setShowForm(true) }} className="rounded-lg border p-2 hover:bg-muted"><Pencil size={15}/></button>
-                          <button onClick={() => deleteItem(item)} className="rounded-lg border p-2 text-destructive hover:bg-destructive/10"><Trash2 size={15}/></button>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                ))}
+              </div>
+              <div className="mt-6 overflow-x-auto -mx-5 px-5 sm:mx-0 sm:px-0">
+                <table className="w-full min-w-[700px] text-left text-sm">
+                  <thead className="border-b text-muted-foreground">
+                    <tr>
+                      <th className="pb-3">Dish</th>
+                      <th className="pb-3">Category</th>
+                      <th className="pb-3">Price</th>
+                      <th className="pb-3">Availability</th>
+                      <th className="pb-3">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {menuItems.filter((item) => menuCategoryFilter === 'all' || item.category === menuCategoryFilter).map((item) => (
+                      <tr key={item.id} className="border-b last:border-0">
+                        <td className="py-4 font-semibold">{item.name}</td>
+                        <td className="py-4 text-muted-foreground">{item.category}</td>
+                        <td className="py-4">₹{item.price}</td>
+                        <td className="py-4">
+                          <button type="button" onClick={() => toggleAvailability(item)} className={`rounded-full px-3 py-1 text-xs font-bold ${item.available ? 'bg-primary/15 text-primary' : 'bg-muted text-muted-foreground'}`}>
+                            {item.available ? 'Available' : 'Unavailable'}
+                          </button>
+                        </td>
+                        <td className="py-4">
+                          <div className="flex gap-2">
+                            <button onClick={() => { setEditing(item); setForm({ name: item.name, category: item.category, price: String(item.price) }); setShowForm(true) }} className="rounded-lg border p-2"><Pencil size={15}/></button>
+                            <button onClick={() => deleteItem(item)} className="rounded-lg border p-2 text-destructive"><Trash2 size={15}/></button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
               </div>
             </section>
           )}
@@ -503,6 +598,7 @@ export default function AdminDashboard() {
                   <p className="text-xs text-muted-foreground">Name: Meenu&apos;s Dosa</p>
                   <p className="text-xs text-muted-foreground">Type: South Indian restaurant</p>
                   <p className="mt-2 text-xs text-muted-foreground">Admin access is managed by the backend authentication system.</p>
+                  <p className="mt-2 text-xs text-muted-foreground">Logged in as: {admin?.email || 'Unknown'}</p>
                 </div>
               </div>
             </section>
@@ -536,21 +632,19 @@ export default function AdminDashboard() {
                     <tbody>
                       {bookings.map((booking) => (
                         <tr key={booking.id} className="border-b last:border-0">
-                          <td className="py-4 font-semibold">#{booking.id}</td>
-                          <td className="py-4">{booking.name}</td>
+                          <td className="py-4 font-semibold">#{booking._id || booking.id}</td>
+                          <td className="py-4">{booking.customerName}</td>
                           <td className="py-4 text-muted-foreground">{booking.phone}</td>
-                          <td className="py-4">{booking.date}</td>
+                          <td className="py-4">{new Date(booking.date).toLocaleDateString()}</td>
                           <td className="py-4">{booking.time}</td>
-                          <td className="py-4">{booking.guests}</td>
+                          <td className="py-4">{booking.guestCount}</td>
                           <td className="py-4">
-                            <select value={booking.status || 'pending'} onChange={(e) => updateBookingStatus(booking.id, e.target.value)} className={`rounded-full px-3 py-1 text-xs font-bold ${booking.status === 'confirmed' ? 'bg-green-500/15 text-green-700' : booking.status === 'cancelled' ? 'bg-destructive/15 text-destructive' : 'bg-yellow-500/15 text-yellow-700'}`}>
-                              <option value="pending">Pending</option>
-                              <option value="confirmed">Confirmed</option>
-                              <option value="cancelled">Cancelled</option>
+                            <select value={booking.status || 'pending'} onChange={(e) => updateBookingStatus(booking._id || booking.id, e.target.value)} className={`rounded-full px-3 py-1 text-xs font-bold ${booking.status === 'confirmed' || booking.status === 'completed' ? 'bg-green-500/15 text-green-700' : booking.status === 'cancelled' || booking.status === 'rejected' ? 'bg-destructive/15 text-destructive' : 'bg-yellow-500/15 text-yellow-700'}`}>
+                              {BOOKING_STATUS_OPTIONS.map((status) => <option key={status} value={status}>{status}</option>)}
                             </select>
                           </td>
                           <td className="py-4">
-                            <button onClick={() => deleteBooking(booking.id)} className="rounded-lg border p-2 text-destructive"><Trash2 size={15}/></button>
+                            <button onClick={() => deleteBooking(booking._id || booking.id)} className="rounded-lg border p-2 text-destructive"><Trash2 size={15}/></button>
                           </td>
                         </tr>
                       ))}
@@ -575,11 +669,11 @@ export default function AdminDashboard() {
                 <input name="phone" placeholder="Phone" className="h-11 rounded-xl border bg-background px-3"/>
                 <input name="hours" placeholder="Opening hours" className="h-11 rounded-xl border bg-background px-3"/>
                 <input name="mapsUrl" placeholder="Google Maps URL" className="h-11 rounded-xl border bg-background px-3"/>
-                <button type="submit" className="rounded-xl bg-primary px-4 py-3 text-sm font-bold text-primary-foreground">Add location</button>
+                <button type="submit" disabled={saving} className="rounded-xl bg-primary px-4 py-3 text-sm font-bold text-primary-foreground disabled:opacity-60">{saving ? 'Adding...' : 'Add location'}</button>
               </form>
               <div className="mt-6 grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
                 {locations.map((loc) => (
-                  <div key={loc.id} className="rounded-2xl border bg-background p-4">
+                  <div key={loc._id || loc.id} className="rounded-2xl border bg-background p-4">
                     <div className="flex items-start justify-between">
                       <div>
                         <p className="font-bold">{loc.name}</p>
@@ -587,7 +681,7 @@ export default function AdminDashboard() {
                         <p className="mt-1 text-xs text-muted-foreground">{loc.phone}</p>
                         <p className="mt-1 text-xs text-muted-foreground">{loc.hours}</p>
                       </div>
-                      <button onClick={() => deleteLocation(loc.id)} className="rounded-lg border p-2 text-destructive"><Trash2 size={15}/></button>
+                      <button onClick={() => deleteLocation(loc._id || loc.id)} className="rounded-lg border p-2 text-destructive"><Trash2 size={15}/></button>
                     </div>
                     {loc.mapsUrl && <a href={loc.mapsUrl} target="_blank" rel="noreferrer noopener" className="mt-2 inline-flex items-center gap-1 text-xs font-bold text-primary">Open map <MapPin size={14}/></a>}
                   </div>
@@ -618,9 +712,7 @@ export default function AdminDashboard() {
             </section>
           )}
         </div>
-      </div>
-    </div>
-  </main>
-  </Shell>
+      </main>
+    </Shell>
   )
 }
