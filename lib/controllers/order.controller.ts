@@ -1,52 +1,69 @@
-import { getStore, saveStore, uuid, type Order, type OrderStatus, type PaymentMethod } from '../store'
+import { getStore, saveStore, uuid, type Order, mongoInsertOne, mongoUpdateOne, mongoDeleteOne, mongoGet } from '../store'
+import { isMongoAvailable } from '../mongo'
 
 export const orderController = {
   async list() {
-    return { ok: true, orders: getStore().orders }
+    return { ok: true, orders: (await getStore()).orders }
   },
 
   async create(payload: {
     items?: { id: string; name: string; price: number; quantity: number }[]
     total?: number
-    paymentMethod?: PaymentMethod
-    source?: 'direct' | 'zomato' | 'swiggy'
+    paymentMethod?: string
+    source?: string
   }) {
     if (!payload.items || !Array.isArray(payload.items) || payload.items.length === 0) {
       return { ok: false, error: 'items required', status: 400 }
     }
-    const s = getStore()
     const order: Order = {
       id: uuid(),
       date: Date.now(),
       items: payload.items,
       total: payload.total || 0,
-      paymentMethod: payload.paymentMethod || 'cash',
-      source: payload.source || 'direct',
+      paymentMethod: (payload.paymentMethod as any) || 'cash',
+      source: (payload.source as any) || 'direct',
       status: 'pending',
       paid: false,
     }
+    if (isMongoAvailable()) {
+      const inserted = await mongoInsertOne('orders', order)
+      if (inserted) return { ok: true, order, status: 201 }
+    }
+    const s = await getStore()
     s.orders.unshift(order)
-    saveStore(s)
+    await saveStore(s)
     return { ok: true, order, status: 201 }
   },
 
-  async update(id: string, updates: { status?: OrderStatus; paid?: boolean }) {
+  async update(id: string, updates: { status?: string; paid?: boolean }) {
     if (!id) return { ok: false, error: 'id required', status: 400 }
-    const s = getStore()
+    if (isMongoAvailable()) {
+      const updated = await mongoUpdateOne('orders', id, updates)
+      if (updated) {
+        const orders = await mongoGet<Order>('orders')
+        const order = orders.find((o) => o.id === id)
+        return { ok: true, order }
+      }
+    }
+    const s = await getStore()
     const order = s.orders.find((o) => o.id === id)
     if (!order) return { ok: false, error: 'not found', status: 404 }
-    if (updates.status !== undefined) order.status = updates.status
+    if (updates.status !== undefined) order.status = updates.status as any
     if (updates.paid !== undefined) order.paid = updates.paid
-    saveStore(s)
+    await saveStore(s)
     return { ok: true, order }
   },
 
   async remove(id: string) {
     if (!id) return { ok: false, error: 'id required', status: 400 }
-    const s = getStore()
+    if (isMongoAvailable()) {
+      const deleted = await mongoDeleteOne('orders', id)
+      if (deleted) return { ok: true, deleted: 1 }
+    }
+    const s = await getStore()
     const before = s.orders.length
     s.orders = s.orders.filter((o) => o.id !== id)
-    saveStore(s)
+    await saveStore(s)
     return { ok: true, deleted: before - s.orders.length }
   },
 }
