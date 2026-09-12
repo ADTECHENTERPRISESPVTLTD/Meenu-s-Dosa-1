@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { menuController } from '@/lib/controllers/menu.controller'
 
-export function GET(request: NextRequest) {
+export async function GET(request: NextRequest) {
   const category = request.nextUrl.searchParams.get('category')
-  return NextResponse.json(menuController.list(category))
+  return NextResponse.json(await menuController.list(category))
 }
 
 export async function POST(request: NextRequest) {

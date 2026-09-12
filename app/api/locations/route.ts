@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { locationController } from '@/lib/controllers/location.controller'
 
-export function GET() {
-  return NextResponse.json(locationController.list())
+export async function GET() {
+  return NextResponse.json(await locationController.list())
 }
 
 export async function POST(request: NextRequest) {

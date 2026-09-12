@@ -6,28 +6,34 @@ export const bookingController = {
   },
 
   async create(payload: {
+    customerName?: string
     name?: string
     phone?: string
     email?: string
+    location?: string
     outlet?: string
     date?: string
     time?: string
+    guestCount?: number
     guests?: number
     message?: string
   }) {
-    if (!payload.name || !payload.phone || !payload.date || !payload.time) {
+    const name = payload.name || payload.customerName
+    const outlet = payload.outlet || payload.location
+    const guests = payload.guests ?? payload.guestCount
+    if (!name || !payload.phone || !payload.date || !payload.time) {
       return { ok: false, error: 'name, phone, date and time are required', status: 400 }
     }
     const s = await getStore()
     const booking: Booking = {
       id: uuid(),
-      name: String(payload.name),
+      name: String(name),
       phone: String(payload.phone),
       email: String(payload.email || ''),
-      outlet: String(payload.outlet || ''),
+      outlet: String(outlet || ''),
       date: String(payload.date),
       time: String(payload.time),
-      guests: Number(payload.guests) || 1,
+      guests: Number(guests) || 1,
       message: String(payload.message || ''),
       status: 'pending',
       createdAt: Date.now(),

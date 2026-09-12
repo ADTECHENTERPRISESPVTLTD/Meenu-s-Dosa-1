@@ -7,12 +7,12 @@ import { bookingService, locations } from '@/lib/data'
 type BookingState = 'idle' | 'loading' | 'success' | 'error'
 
 const timeSlots = [
-  '12:00 PM (Lunch)',
-  '01:00 PM (Lunch)',
-  '07:30 PM (Dinner)',
-  '08:00 PM (Dinner)',
-  '08:30 PM (Dinner)',
-  '09:00 PM (Dinner)',
+  { value: '12:00', label: '12:00 PM (Lunch)' },
+  { value: '13:00', label: '01:00 PM (Lunch)' },
+  { value: '19:30', label: '07:30 PM (Dinner)' },
+  { value: '20:00', label: '08:00 PM (Dinner)' },
+  { value: '20:30', label: '08:30 PM (Dinner)' },
+  { value: '21:00', label: '09:00 PM (Dinner)' },
 ]
 
 export function BookingForm() {
@@ -24,7 +24,7 @@ export function BookingForm() {
     email: '',
     outlet: locations[0].id,
     date: '',
-    time: timeSlots[2],
+    time: timeSlots[2].value,
     guests: '2',
     message: '',
   })
@@ -52,12 +52,21 @@ export function BookingForm() {
     setState('loading')
     try {
       const result = await bookingService.create({
-        ...formData,
+        customerName: formData.name,
+        name: formData.name,
+        phone: formData.phone,
+        email: formData.email || undefined,
+        location: formData.outlet,
+        outlet: formData.outlet,
+        date: formData.date,
+        time: formData.time,
+        guestCount: Number(formData.guests),
         guests: Number(formData.guests),
+        message: formData.message || undefined,
       })
       if (result.ok) {
         setState('success')
-        setFormData({ name: '', phone: '', email: '', outlet: locations[0].id, date: '', time: timeSlots[2], guests: '2', message: '' })
+        setFormData({ name: '', phone: '', email: '', outlet: locations[0].id, date: '', time: timeSlots[2].value, guests: '2', message: '' })
       } else {
         setErrors({ form: result.error || 'Booking API is not connected yet.' })
         setState('error')
@@ -156,7 +165,7 @@ export function BookingForm() {
             className={inputClassName('time')}
           >
             {timeSlots.map((t) => (
-              <option key={t} value={t}>{t}</option>
+              <option key={t.value} value={t.value}>{t.label}</option>
             ))}
           </select>
           {errors.time && <span className="text-xs text-destructive">{errors.time}</span>}

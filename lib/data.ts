@@ -5,8 +5,8 @@ export const siteConfig = {
   name: "Meenu's Dosa",
   tagline: '40-year heritage of crafting crispy dosas and soda-free fluffy idlis.',
   description: 'Authentic South Indian cuisine. Vegetarian. Indoor seating. Home delivery. Takeaway. Lunch & Dinner. Digital payments.',
-  apiUrl: process.env.NEXT_PUBLIC_API_URL || '/api',
-  baseUrl: process.env.NEXT_PUBLIC_API_URL || '/api',
+  apiUrl: (process.env.NEXT_PUBLIC_API_URL || '/api').replace(/\/$/, ''),
+  baseUrl: (process.env.NEXT_PUBLIC_API_URL || '/api').replace(/\/$/, ''),
   integrations: {
     whatsapp: 'https://linktr.ee/meenusdosa',
     zomato: 'https://www.zomato.com/bhopal/meenus-dosa-ayodhya-bypass/',
@@ -76,10 +76,10 @@ export const bookingService = {
         body: JSON.stringify(payload),
       })
       const data = await res.json()
-      if (data.ok) return { ok: true, booking: data.booking }
-      return { ok: false, error: data.error || 'Booking failed' }
-    } catch {
-      return { ok: false, error: 'Network error. Please try again.' }
+      if (res.ok && (data.success || data.ok)) return { ok: true, booking: data.data || data.booking }
+      return { ok: false, error: data.message || data.error || 'Booking failed' }
+    } catch (error) {
+      return { ok: false, error: error instanceof Error ? error.message : 'Network error. Please try again.' }
     }
   },
 }

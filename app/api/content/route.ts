@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { contentController } from '@/lib/controllers/content.controller'
 
-export function GET() {
-  return NextResponse.json(contentController.get())
+export async function GET() {
+  return NextResponse.json(await contentController.get())
 }
 
 export async function POST(request: NextRequest) {
