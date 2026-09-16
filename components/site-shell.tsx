@@ -1,7 +1,7 @@
 'use client'
 import Link from 'next/link'
 import Image from 'next/image'
-import { Menu, Moon, Sun, ArrowUpRight, MessageCircle, X, Shield } from 'lucide-react'
+import { Menu, Moon, Sun, ArrowUpRight, MessageCircle, X, Shield, Sparkles, MapPin, Phone, Heart, UtensilsCrossed } from 'lucide-react'
 import { useState } from 'react'
 import { useTheme } from './theme-provider'
 import { siteConfig } from '@/lib/data'
@@ -9,56 +9,268 @@ import { siteConfig } from '@/lib/data'
 const navLinks = [
   { label: 'Home', href: '/' },
   { label: 'Menu', href: '/menu' },
-  { label: 'Our story', href: '/about' },
-  { label: 'Locations', href: '/locations' },
+  { label: 'Our Story', href: '/about' },
+  { label: 'Outlets', href: '/locations' },
   { label: 'Gallery', href: '/gallery' },
-  { label: 'Order online', href: '/order' },
+  { label: 'Order Online', href: '/order' },
   { label: 'Contact', href: '/contact' },
 ]
 
-export function Header(){
-  const [open,setOpen]=useState(false)
-  const {dark,toggle}=useTheme()
-  return <header className="sticky top-0 z-40 border-b-2 border-border bg-background shadow-sm">
-    <div className="mx-auto flex min-h-16 max-w-7xl items-center justify-between gap-4 px-4 sm:px-6">
-      <Link href="/" onClick={()=>setOpen(false)} className="flex shrink-0 items-center gap-2 font-black tracking-tight">
-        <span className="grid size-9 place-items-center rounded-full bg-primary text-primary-foreground">M</span>
-        <span>{siteConfig.name}</span>
-      </Link>
-      <nav aria-label="Primary navigation" className="hidden items-center gap-3 lg:flex">
-        {navLinks.map((l)=><Link key={l.href} href={l.href} className="whitespace-nowrap rounded-full px-3 py-1.5 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground">{l.label}</Link>)}
-        <Link href="/book" className="whitespace-nowrap rounded-full bg-primary px-4 py-2 text-sm font-bold text-primary-foreground">Book a table</Link>
-        <Link href="/admin/login" className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-full border-2 border-amber-500/70 bg-amber-500/10 px-4 py-2 text-sm font-bold text-amber-600 transition hover:bg-amber-500/20 dark:text-amber-400">
-          <Shield size={14} /> Admin
+export function Header() {
+  const [open, setOpen] = useState(false)
+  const { dark, toggle } = useTheme()
+
+  return (
+    <header className="sticky top-0 z-40 border-b border-amber-500/20 bg-background/90 backdrop-blur-md shadow-sm transition-colors">
+      <div className="mx-auto flex min-h-20 max-w-7xl items-center justify-between gap-4 px-4 sm:px-6">
+        {/* Brand Logo */}
+        <Link href="/" onClick={() => setOpen(false)} className="flex shrink-0 items-center gap-3 group">
+          <div className="relative grid size-10 place-items-center rounded-2xl bg-amber-500 text-white font-black shadow-md shadow-amber-500/20 group-hover:scale-105 transition-transform">
+            <UtensilsCrossed size={20} />
+            <span className="absolute -bottom-1 -right-1 flex size-3">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
+              <span className="relative inline-flex rounded-full size-3 bg-emerald-500"></span>
+            </span>
+          </div>
+          <div>
+            <span className="text-xl font-black tracking-tight block gold-gradient-text">
+              {siteConfig.name}
+            </span>
+            <span className="text-[10px] uppercase font-bold tracking-widest text-muted-foreground block -mt-1">
+              40 Years of Flavor
+            </span>
+          </div>
         </Link>
-        <button aria-label="Toggle theme" onClick={toggle} className="rounded-full border p-2">{dark?<Sun size={16}/>:<Moon size={16}/>}</button>
-      </nav>
-      <div className="flex items-center gap-2 lg:hidden">
-        <Link href="/admin/login" className="inline-flex items-center gap-1.5 rounded-full border-2 border-amber-500/70 bg-amber-500/10 px-3 py-1.5 text-sm font-bold text-amber-600 dark:text-amber-400">
-          <Shield size={14} /> Admin
-        </Link>
-        <button aria-label="Toggle theme" onClick={toggle} className="rounded-full border p-2">{dark?<Sun size={16}/>:<Moon size={16}/>}</button>
-        <button aria-expanded={open} aria-controls="mobile-navigation" aria-label={open ? 'Close navigation' : 'Open navigation'} onClick={()=>setOpen(!open)} className="grid size-10 place-items-center rounded-full border-2 border-foreground bg-foreground text-background shadow-sm">{open?<X size={20}/>:<Menu size={20}/>}</button>
-      </div>
-    </div>
-    {open && <div className="fixed inset-0 z-50 lg:hidden">
-      <div className="absolute inset-0 bg-black/60 backdrop-blur-md" onClick={()=>setOpen(false)} />
-      <nav id="mobile-navigation" aria-label="Mobile navigation" className="absolute right-0 top-0 h-full w-[85%] max-w-sm border-l-2 border-border bg-background shadow-2xl">
-        <div className="flex items-center justify-between border-b border-border px-4 py-4">
-          <span className="text-lg font-black">{siteConfig.name}</span>
-          <button aria-label="Close navigation" onClick={()=>setOpen(false)} className="grid size-10 place-items-center rounded-full border-2 border-foreground bg-foreground text-background"><X size={20}/></button>
-        </div>
-        <div className="flex flex-col gap-1 px-3 py-4">
-          {navLinks.map((l)=><Link onClick={()=>setOpen(false)} key={l.href} href={l.href} className="rounded-xl px-4 py-4 text-base font-bold hover:bg-muted">{l.label}</Link>)}
-          <Link onClick={()=>setOpen(false)} href="/book" className="mt-2 rounded-xl bg-primary px-4 py-4 text-center text-base font-bold text-primary-foreground">Book a table</Link>
-          <Link onClick={()=>setOpen(false)} href="/admin/login" className="mt-2 inline-flex items-center justify-center gap-1.5 rounded-xl border-2 border-amber-500/70 bg-amber-500/10 px-4 py-4 text-base font-bold text-amber-600 dark:text-amber-400">
-            <Shield size={16} /> Admin Portal
+
+        {/* Desktop Nav */}
+        <nav aria-label="Primary navigation" className="hidden items-center gap-2 lg:flex">
+          {navLinks.map((l) => (
+            <Link
+              key={l.href}
+              href={l.href}
+              className="whitespace-nowrap rounded-full px-3.5 py-2 text-sm font-semibold text-muted-foreground transition-all hover:bg-amber-500/10 hover:text-amber-600 dark:hover:text-amber-400"
+            >
+              {l.label}
+            </Link>
+          ))}
+
+          <Link
+            href="/book"
+            className="whitespace-nowrap rounded-full gold-gradient-bg px-5 py-2.5 text-sm font-bold text-white shadow-md shadow-amber-500/20 transition hover:opacity-95 hover:scale-105 active:scale-95"
+          >
+            Book a Table
           </Link>
+
+          <Link
+            href="/admin/login"
+            className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-full border border-amber-500/30 bg-amber-500/10 px-3.5 py-2 text-xs font-bold text-amber-600 transition hover:bg-amber-500/20 dark:text-amber-400"
+          >
+            <Shield size={14} /> Admin
+          </Link>
+
+          <button
+            aria-label="Toggle theme"
+            onClick={toggle}
+            className="rounded-full border border-border p-2.5 text-muted-foreground hover:bg-amber-500/10 hover:text-amber-600 transition"
+          >
+            {dark ? <Sun size={18} className="text-amber-400" /> : <Moon size={18} className="text-slate-700" />}
+          </button>
+        </nav>
+
+        {/* Mobile controls */}
+        <div className="flex items-center gap-2 lg:hidden">
+          <Link
+            href="/admin/login"
+            className="inline-flex items-center gap-1 rounded-full border border-amber-500/40 bg-amber-500/10 px-2.5 py-1.5 text-xs font-bold text-amber-600 dark:text-amber-400"
+          >
+            <Shield size={12} /> Admin
+          </Link>
+          <button
+            aria-label="Toggle theme"
+            onClick={toggle}
+            className="rounded-full border p-2 text-muted-foreground"
+          >
+            {dark ? <Sun size={16} className="text-amber-400" /> : <Moon size={16} />}
+          </button>
+          <button
+            aria-expanded={open}
+            aria-controls="mobile-navigation"
+            aria-label={open ? 'Close navigation' : 'Open navigation'}
+            onClick={() => setOpen(!open)}
+            className="grid size-10 place-items-center rounded-2xl bg-amber-500 text-white shadow-md shadow-amber-500/20"
+          >
+            {open ? <X size={20} /> : <Menu size={20} />}
+          </button>
         </div>
-      </nav>
-    </div>}
-  </header>
+      </div>
+
+      {/* Mobile Drawer */}
+      {open && (
+        <div className="fixed inset-0 z-50 lg:hidden">
+          <div className="absolute inset-0 bg-black/60 backdrop-blur-md" onClick={() => setOpen(false)} />
+          <nav
+            id="mobile-navigation"
+            aria-label="Mobile navigation"
+            className="absolute right-0 top-0 h-full w-[85%] max-w-sm border-l border-amber-500/20 bg-background shadow-2xl flex flex-col justify-between"
+          >
+            <div>
+              <div className="flex items-center justify-between border-b border-border px-5 py-5">
+                <span className="text-lg font-black gold-gradient-text">{siteConfig.name}</span>
+                <button
+                  aria-label="Close navigation"
+                  onClick={() => setOpen(false)}
+                  className="grid size-9 place-items-center rounded-full bg-amber-500 text-white"
+                >
+                  <X size={18} />
+                </button>
+              </div>
+
+              <div className="flex flex-col gap-1 px-4 py-6">
+                {navLinks.map((l) => (
+                  <Link
+                    onClick={() => setOpen(false)}
+                    key={l.href}
+                    href={l.href}
+                    className="rounded-xl px-4 py-3 text-base font-bold transition hover:bg-amber-500/10 hover:text-amber-600"
+                  >
+                    {l.label}
+                  </Link>
+                ))}
+              </div>
+            </div>
+
+            <div className="p-5 border-t border-border flex flex-col gap-3">
+              <Link
+                onClick={() => setOpen(false)}
+                href="/book"
+                className="rounded-2xl gold-gradient-bg px-4 py-3.5 text-center text-base font-bold text-white shadow-md shadow-amber-500/20"
+              >
+                Book a Table
+              </Link>
+              <Link
+                onClick={() => setOpen(false)}
+                href="/admin/login"
+                className="inline-flex items-center justify-center gap-2 rounded-2xl border border-amber-500/40 bg-amber-500/10 px-4 py-3 text-base font-bold text-amber-600 dark:text-amber-400"
+              >
+                <Shield size={18} /> Admin Portal
+              </Link>
+            </div>
+          </nav>
+        </div>
+      )}
+    </header>
+  )
 }
-export function Footer(){return <footer className="border-t border-border"><div className="mx-auto grid max-w-7xl gap-10 px-4 py-12 sm:px-6 md:grid-cols-[1.4fr_1fr_1fr]"><div><div className="mb-3 flex items-center gap-2 font-black"><span className="grid size-8 place-items-center rounded-full bg-primary text-primary-foreground">M</span>{siteConfig.name}</div><p className="max-w-xs text-sm text-muted-foreground">{siteConfig.tagline} Authentic South Indian cuisine in Bhopal.</p></div><div><p className="mb-3 text-sm font-bold">Explore</p><div className="flex flex-col gap-2 text-sm text-muted-foreground"><Link href="/">Home</Link><Link href="/menu">Menu</Link><Link href="/about">Our story</Link><Link href="/locations">Locations</Link><Link href="/gallery">Gallery</Link></div></div><div><p className="mb-3 text-sm font-bold">Connect</p><div className="flex flex-col gap-2 text-sm text-muted-foreground"><Link href="/order">Order online <ArrowUpRight className="inline" size={14}/></Link><Link href="/book">Book a table</Link><Link href="/contact">Contact</Link><a href={siteConfig.integrations.whatsapp} target="_blank" rel="noreferrer noopener" className="inline-flex items-center gap-2 hover:text-foreground"><MessageCircle size={14}/> WhatsApp</a><a href={siteConfig.integrations.instagram} target="_blank" rel="noreferrer noopener" className="inline-flex items-center gap-2 hover:text-foreground"><ArrowUpRight size={14}/> Instagram</a></div></div><div><p className="mb-3 text-sm font-bold">Admin</p><div className="flex flex-col gap-2 text-sm text-muted-foreground"><Link href="/admin/login" className="inline-flex items-center gap-2 hover:text-foreground"><Shield size={14}/> Admin Portal</Link></div></div></div><div className="border-t px-4 py-5 text-center text-xs text-muted-foreground">© {new Date().getFullYear()} {siteConfig.name}. Built for backend connection.</div></footer>}
-export function Shell({children}:{children:React.ReactNode}){return <><Header/><div className="fixed inset-0 -z-10 bg-[radial-gradient(circle_at_80%_10%,oklch(0.92_0.13_90/.65),transparent_35%)]"/><main>{children}</main><Footer/></>}
-export function CategoryImage({src,alt,className}:{src:string;alt:string;className?:string}){return <Image src={`/images/categories/${src}`} alt={alt} width={900} height={650} className={className||'h-full w-full object-cover'} />}
+
+export function Footer() {
+  return (
+    <footer className="border-t border-amber-500/20 bg-card/60 backdrop-blur-sm">
+      <div className="mx-auto grid max-w-7xl gap-10 px-4 py-16 sm:px-6 md:grid-cols-[1.5fr_1fr_1fr_1.2fr]">
+        <div>
+          <div className="mb-4 flex items-center gap-3">
+            <div className="grid size-10 place-items-center rounded-2xl bg-amber-500 text-white font-black shadow-md shadow-amber-500/20">
+              <UtensilsCrossed size={20} />
+            </div>
+            <span className="text-xl font-black gold-gradient-text">{siteConfig.name}</span>
+          </div>
+          <p className="max-w-xs text-sm text-muted-foreground leading-relaxed">
+            {siteConfig.tagline} Authentic South Indian delicacies, 100% vegetarian & soda-free.
+          </p>
+          <div className="mt-4 flex items-center gap-2 text-xs font-bold text-amber-600 dark:text-amber-400">
+            <Sparkles size={14} /> 40-Year Heritage in Bhopal
+          </div>
+        </div>
+
+        <div>
+          <p className="mb-4 text-sm font-black uppercase tracking-wider text-amber-600 dark:text-amber-400">
+            Navigation
+          </p>
+          <div className="flex flex-col gap-2.5 text-sm font-semibold text-muted-foreground">
+            <Link href="/" className="hover:text-amber-600 transition">Home</Link>
+            <Link href="/menu" className="hover:text-amber-600 transition">Our Menu</Link>
+            <Link href="/about" className="hover:text-amber-600 transition">Our Story</Link>
+            <Link href="/locations" className="hover:text-amber-600 transition">Outlets</Link>
+            <Link href="/gallery" className="hover:text-amber-600 transition">Photo Gallery</Link>
+          </div>
+        </div>
+
+        <div>
+          <p className="mb-4 text-sm font-black uppercase tracking-wider text-amber-600 dark:text-amber-400">
+            Quick Connect
+          </p>
+          <div className="flex flex-col gap-2.5 text-sm font-semibold text-muted-foreground">
+            <Link href="/order" className="hover:text-amber-600 transition inline-flex items-center gap-1">
+              Order Online <ArrowUpRight size={14} />
+            </Link>
+            <Link href="/book" className="hover:text-amber-600 transition">Book Table</Link>
+            <Link href="/contact" className="hover:text-amber-600 transition">Contact Us</Link>
+            <a
+              href={siteConfig.integrations.whatsapp}
+              target="_blank"
+              rel="noreferrer noopener"
+              className="inline-flex items-center gap-2 text-emerald-600 dark:text-emerald-400 hover:underline"
+            >
+              <MessageCircle size={15} /> WhatsApp Delivery
+            </a>
+          </div>
+        </div>
+
+        <div>
+          <p className="mb-4 text-sm font-black uppercase tracking-wider text-amber-600 dark:text-amber-400">
+            Bhopal Outlets
+          </p>
+          <div className="flex flex-col gap-3 text-xs text-muted-foreground">
+            <div className="rounded-xl border border-amber-500/20 bg-background/50 p-3">
+              <p className="font-bold text-foreground flex items-center gap-1">
+                <MapPin size={12} className="text-amber-500" /> Minal Residency Outlet
+              </p>
+              <p className="mt-1">Raj Capital, J.K. Road, Ayodhya Bypass</p>
+              <p className="mt-1 font-semibold text-amber-600 dark:text-amber-400">
+                <Phone size={10} className="inline mr-1" /> +91 6262 9555 05
+              </p>
+            </div>
+            <div className="rounded-xl border border-amber-500/20 bg-background/50 p-3">
+              <p className="font-bold text-foreground flex items-center gap-1">
+                <MapPin size={12} className="text-amber-500" /> MP Nagar Outlet
+              </p>
+              <p className="mt-1">Zone 2, MP Nagar, Bhopal</p>
+              <p className="mt-1 font-semibold text-amber-600 dark:text-amber-400">
+                <Phone size={10} className="inline mr-1" /> +91 6262 9555 06
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="border-t border-border px-4 py-6 text-center text-xs text-muted-foreground flex flex-col sm:flex-row items-center justify-between max-w-7xl mx-auto gap-3">
+        <p>© {new Date().getFullYear()} {siteConfig.name}. Handcrafted South Indian Delicacies.</p>
+        <p className="inline-flex items-center gap-1 font-semibold">
+          Crafted with <Heart size={14} className="text-red-500 fill-red-500 inline" /> for food lovers in Bhopal
+        </p>
+      </div>
+    </footer>
+  )
+}
+
+export function Shell({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="min-h-screen flex flex-col bg-background text-foreground">
+      <Header />
+      <div className="fixed inset-0 -z-10 bg-[radial-gradient(circle_at_80%_0%,oklch(0.92_0.14_80/.25),transparent_40%)] dark:bg-[radial-gradient(circle_at_80%_0%,oklch(0.35_0.12_65/.2),transparent_40%)]" />
+      <main className="flex-1">{children}</main>
+      <Footer />
+    </div>
+  )
+}
+
+export function CategoryImage({ src, alt, className }: { src: string; alt: string; className?: string }) {
+  return (
+    <Image
+      src={`/images/categories/${src}`}
+      alt={alt}
+      width={900}
+      height={650}
+      className={className || 'h-full w-full object-cover'}
+    />
+  )
+}

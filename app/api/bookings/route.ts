@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { bookingController } from '@/lib/controllers/booking.controller'
 
-export function GET() {
-  return NextResponse.json(bookingController.list())
+export async function GET() {
+  const result = await bookingController.list()
+  return NextResponse.json(result)
 }
 
 export async function POST(request: NextRequest) {
@@ -19,6 +20,6 @@ export async function PATCH(request: NextRequest) {
 
 export async function DELETE(request: NextRequest) {
   const id = request.nextUrl.searchParams.get('id')
-  const result = await bookingController.remove(id)
+  const result = await bookingController.remove(id!)
   return NextResponse.json(result, { status: result.status || 200 })
 }
