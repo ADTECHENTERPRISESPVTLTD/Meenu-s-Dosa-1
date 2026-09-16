@@ -1,15 +1,15 @@
 'use client'
 import Link from 'next/link'
 import Image from 'next/image'
-import { Menu, Moon, Sun, ArrowUpRight, MessageCircle, X, Shield, Sparkles, MapPin, Phone, Heart, UtensilsCrossed } from 'lucide-react'
+import { Menu, Moon, Sun, ArrowUpRight, MessageCircle, X, Shield, Sparkles, MapPin, Phone, Heart, UtensilsCrossed, Leaf, Coffee } from 'lucide-react'
 import { useState } from 'react'
 import { useTheme } from './theme-provider'
 import { siteConfig } from '@/lib/data'
 
 const navLinks = [
   { label: 'Home', href: '/' },
-  { label: 'Menu', href: '/menu' },
-  { label: 'Our Story', href: '/about' },
+  { label: 'Namma Menu', href: '/menu' },
+  { label: 'Namma Story', href: '/about' },
   { label: 'Outlets', href: '/locations' },
   { label: 'Gallery', href: '/gallery' },
   { label: 'Order Online', href: '/order' },
@@ -21,34 +21,40 @@ export function Header() {
   const { dark, toggle } = useTheme()
 
   return (
-    <header className="sticky top-0 z-40 border-b border-amber-500/20 bg-background/90 backdrop-blur-md shadow-sm transition-colors">
+    <header className="sticky top-0 z-40 border-b border-amber-500/25 bg-background/95 backdrop-blur-md shadow-sm transition-colors">
+      {/* South Indian Top Announcement Bar */}
+      <div className="banana-leaf-bg py-1.5 px-4 text-center text-xs font-bold text-white tracking-wide shadow-inner flex items-center justify-center gap-2">
+        <Sparkles size={13} className="animate-spin text-amber-300 shrink-0" />
+        <span>🙏 <strong>Vanakkam!</strong> Authentic South Indian Tawa Dosas, 100% Ghee & Soda-Free Fluffy Idlis</span>
+      </div>
+
       <div className="mx-auto flex min-h-20 max-w-7xl items-center justify-between gap-4 px-4 sm:px-6">
         {/* Brand Logo */}
         <Link href="/" onClick={() => setOpen(false)} className="flex shrink-0 items-center gap-3 group">
-          <div className="relative grid size-10 place-items-center rounded-2xl bg-amber-500 text-white font-black shadow-md shadow-amber-500/20 group-hover:scale-105 transition-transform">
-            <UtensilsCrossed size={20} />
-            <span className="absolute -bottom-1 -right-1 flex size-3">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
-              <span className="relative inline-flex rounded-full size-3 bg-emerald-500"></span>
+          <div className="relative grid size-11 place-items-center rounded-2xl gold-gradient-bg text-white font-black shadow-md shadow-amber-500/20 group-hover:scale-105 transition-transform">
+            <UtensilsCrossed size={22} />
+            <span className="absolute -bottom-1 -right-1 flex size-3.5">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+              <span className="relative inline-flex rounded-full size-3.5 bg-emerald-600 border-2 border-white"></span>
             </span>
           </div>
           <div>
-            <span className="text-xl font-black tracking-tight block gold-gradient-text">
+            <span className="text-xl font-black tracking-tight block south-indian-gradient-text">
               {siteConfig.name}
             </span>
-            <span className="text-[10px] uppercase font-bold tracking-widest text-muted-foreground block -mt-1">
-              40 Years of Flavor
+            <span className="text-[10px] uppercase font-bold tracking-widest text-emerald-700 dark:text-emerald-400 flex items-center gap-1 -mt-0.5">
+              <Leaf size={10} /> 40 Years of Traditional Tawa
             </span>
           </div>
         </Link>
 
         {/* Desktop Nav */}
-        <nav aria-label="Primary navigation" className="hidden items-center gap-2 lg:flex">
+        <nav aria-label="Primary navigation" className="hidden items-center gap-1.5 lg:flex">
           {navLinks.map((l) => (
             <Link
               key={l.href}
               href={l.href}
-              className="whitespace-nowrap rounded-full px-3.5 py-2 text-sm font-semibold text-muted-foreground transition-all hover:bg-amber-500/10 hover:text-amber-600 dark:hover:text-amber-400"
+              className="whitespace-nowrap rounded-full px-3.5 py-2 text-xs font-extrabold text-muted-foreground transition-all hover:bg-amber-500/10 hover:text-amber-600 dark:hover:text-amber-400"
             >
               {l.label}
             </Link>
@@ -56,16 +62,16 @@ export function Header() {
 
           <Link
             href="/book"
-            className="whitespace-nowrap rounded-full gold-gradient-bg px-5 py-2.5 text-sm font-bold text-white shadow-md shadow-amber-500/20 transition hover:opacity-95 hover:scale-105 active:scale-95"
+            className="whitespace-nowrap rounded-full gold-gradient-bg px-5 py-2.5 text-xs font-black text-white shadow-md shadow-amber-500/20 transition hover:opacity-95 hover:scale-105 active:scale-95"
           >
             Book a Table
           </Link>
 
           <Link
             href="/admin/login"
-            className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-full border border-amber-500/30 bg-amber-500/10 px-3.5 py-2 text-xs font-bold text-amber-600 transition hover:bg-amber-500/20 dark:text-amber-400"
+            className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-full border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-xs font-bold text-amber-600 transition hover:bg-amber-500/20 dark:text-amber-400"
           >
-            <Shield size={14} /> Admin
+            <Shield size={13} /> Admin
           </Link>
 
           <button
@@ -73,7 +79,7 @@ export function Header() {
             onClick={toggle}
             className="rounded-full border border-border p-2.5 text-muted-foreground hover:bg-amber-500/10 hover:text-amber-600 transition"
           >
-            {dark ? <Sun size={18} className="text-amber-400" /> : <Moon size={18} className="text-slate-700" />}
+            {dark ? <Sun size={17} className="text-amber-400" /> : <Moon size={17} className="text-slate-700" />}
           </button>
         </nav>
 
@@ -97,7 +103,7 @@ export function Header() {
             aria-controls="mobile-navigation"
             aria-label={open ? 'Close navigation' : 'Open navigation'}
             onClick={() => setOpen(!open)}
-            className="grid size-10 place-items-center rounded-2xl bg-amber-500 text-white shadow-md shadow-amber-500/20"
+            className="grid size-10 place-items-center rounded-2xl gold-gradient-bg text-white shadow-md shadow-amber-500/20"
           >
             {open ? <X size={20} /> : <Menu size={20} />}
           </button>
@@ -115,7 +121,10 @@ export function Header() {
           >
             <div>
               <div className="flex items-center justify-between border-b border-border px-5 py-5">
-                <span className="text-lg font-black gold-gradient-text">{siteConfig.name}</span>
+                <div>
+                  <span className="text-lg font-black south-indian-gradient-text">{siteConfig.name}</span>
+                  <p className="text-[10px] font-bold text-emerald-600">🙏 Vanakkam & Welcome!</p>
+                </div>
                 <button
                   aria-label="Close navigation"
                   onClick={() => setOpen(false)}
@@ -164,41 +173,44 @@ export function Header() {
 
 export function Footer() {
   return (
-    <footer className="border-t border-amber-500/20 bg-card/60 backdrop-blur-sm">
+    <footer className="border-t border-amber-500/20 bg-card/80 backdrop-blur-sm kolam-pattern">
       <div className="mx-auto grid max-w-7xl gap-10 px-4 py-16 sm:px-6 md:grid-cols-[1.5fr_1fr_1fr_1.2fr]">
         <div>
           <div className="mb-4 flex items-center gap-3">
-            <div className="grid size-10 place-items-center rounded-2xl bg-amber-500 text-white font-black shadow-md shadow-amber-500/20">
-              <UtensilsCrossed size={20} />
+            <div className="grid size-11 place-items-center rounded-2xl gold-gradient-bg text-white font-black shadow-md shadow-amber-500/20">
+              <UtensilsCrossed size={22} />
             </div>
-            <span className="text-xl font-black gold-gradient-text">{siteConfig.name}</span>
+            <div>
+              <span className="text-xl font-black south-indian-gradient-text">{siteConfig.name}</span>
+              <p className="text-[10px] font-bold text-emerald-600">🙏 Traditional South Indian Tawa</p>
+            </div>
           </div>
-          <p className="max-w-xs text-sm text-muted-foreground leading-relaxed">
-            {siteConfig.tagline} Authentic South Indian delicacies, 100% vegetarian & soda-free.
+          <p className="max-w-xs text-xs text-muted-foreground leading-relaxed">
+            {siteConfig.tagline} Authentic South Indian delicacies, 100% pure vegetarian, 24-hr stone ground & soda-free.
           </p>
-          <div className="mt-4 flex items-center gap-2 text-xs font-bold text-amber-600 dark:text-amber-400">
-            <Sparkles size={14} /> 40-Year Heritage in Bhopal
+          <div className="mt-4 flex items-center gap-2 text-xs font-bold text-amber-700 dark:text-amber-400">
+            <Sparkles size={14} /> 40-Year Namma Heritage in Bhopal
           </div>
         </div>
 
         <div>
-          <p className="mb-4 text-sm font-black uppercase tracking-wider text-amber-600 dark:text-amber-400">
-            Navigation
+          <p className="mb-4 text-xs font-black uppercase tracking-widest text-emerald-700 dark:text-emerald-400">
+            Explore Menu
           </p>
-          <div className="flex flex-col gap-2.5 text-sm font-semibold text-muted-foreground">
+          <div className="flex flex-col gap-2.5 text-xs font-semibold text-muted-foreground">
             <Link href="/" className="hover:text-amber-600 transition">Home</Link>
-            <Link href="/menu" className="hover:text-amber-600 transition">Our Menu</Link>
-            <Link href="/about" className="hover:text-amber-600 transition">Our Story</Link>
+            <Link href="/menu" className="hover:text-amber-600 transition">Namma Menu</Link>
+            <Link href="/about" className="hover:text-amber-600 transition">Namma Story</Link>
             <Link href="/locations" className="hover:text-amber-600 transition">Outlets</Link>
             <Link href="/gallery" className="hover:text-amber-600 transition">Photo Gallery</Link>
           </div>
         </div>
 
         <div>
-          <p className="mb-4 text-sm font-black uppercase tracking-wider text-amber-600 dark:text-amber-400">
+          <p className="mb-4 text-xs font-black uppercase tracking-widest text-emerald-700 dark:text-emerald-400">
             Quick Connect
           </p>
-          <div className="flex flex-col gap-2.5 text-sm font-semibold text-muted-foreground">
+          <div className="flex flex-col gap-2.5 text-xs font-semibold text-muted-foreground">
             <Link href="/order" className="hover:text-amber-600 transition inline-flex items-center gap-1">
               Order Online <ArrowUpRight size={14} />
             </Link>
@@ -216,24 +228,24 @@ export function Footer() {
         </div>
 
         <div>
-          <p className="mb-4 text-sm font-black uppercase tracking-wider text-amber-600 dark:text-amber-400">
+          <p className="mb-4 text-xs font-black uppercase tracking-widest text-emerald-700 dark:text-emerald-400">
             Bhopal Outlets
           </p>
           <div className="flex flex-col gap-3 text-xs text-muted-foreground">
-            <div className="rounded-xl border border-amber-500/20 bg-background/50 p-3">
+            <div className="rounded-xl border border-amber-500/20 bg-background/60 p-3">
               <p className="font-bold text-foreground flex items-center gap-1">
                 <MapPin size={12} className="text-amber-500" /> Minal Residency Outlet
               </p>
-              <p className="mt-1">Raj Capital, J.K. Road, Ayodhya Bypass</p>
+              <p className="mt-1 text-[11px]">Raj Capital, J.K. Road, Ayodhya Bypass</p>
               <p className="mt-1 font-semibold text-amber-600 dark:text-amber-400">
                 <Phone size={10} className="inline mr-1" /> +91 6262 9555 05
               </p>
             </div>
-            <div className="rounded-xl border border-amber-500/20 bg-background/50 p-3">
+            <div className="rounded-xl border border-amber-500/20 bg-background/60 p-3">
               <p className="font-bold text-foreground flex items-center gap-1">
                 <MapPin size={12} className="text-amber-500" /> MP Nagar Outlet
               </p>
-              <p className="mt-1">Zone 2, MP Nagar, Bhopal</p>
+              <p className="mt-1 text-[11px]">Zone 2, MP Nagar, Bhopal</p>
               <p className="mt-1 font-semibold text-amber-600 dark:text-amber-400">
                 <Phone size={10} className="inline mr-1" /> +91 6262 9555 06
               </p>
@@ -243,7 +255,7 @@ export function Footer() {
       </div>
 
       <div className="border-t border-border px-4 py-6 text-center text-xs text-muted-foreground flex flex-col sm:flex-row items-center justify-between max-w-7xl mx-auto gap-3">
-        <p>© {new Date().getFullYear()} {siteConfig.name}. Handcrafted South Indian Delicacies.</p>
+        <p>© {new Date().getFullYear()} {siteConfig.name}. Authentic South Indian Delicacies.</p>
         <p className="inline-flex items-center gap-1 font-semibold">
           Crafted with <Heart size={14} className="text-red-500 fill-red-500 inline" /> for food lovers in Bhopal
         </p>

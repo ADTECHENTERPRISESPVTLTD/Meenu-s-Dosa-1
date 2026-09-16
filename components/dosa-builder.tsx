@@ -24,33 +24,33 @@ type DrinkItem = {
 }
 
 const DOSA_BASES: DosaBase[] = [
-  { id: 'b1', name: 'Butter Masala Dosa', price: 209, desc: 'Golden crisp dosa stuffed with spiced potato bhaji & fresh butter' },
-  { id: 'b2', name: 'Ghee Roast Masala Dosa', price: 274, desc: 'Roasted with pure desi ghee on seasoned cast iron tawa' },
-  { id: 'b3', name: 'Mysore Masala Dosa', price: 213, desc: 'Lined with authentic red chili-garlic paste & spiced potatoes' },
-  { id: 'b4', name: 'Cheese Masala Dosa', price: 293, desc: 'Loaded with rich melted cheese & aromatic potato filling' },
+  { id: 'b1', name: 'Namma Butter Masala Dosa', price: 209, desc: 'Golden crisp tawa dosa stuffed with spiced potato bhaji & fresh Amul butter' },
+  { id: 'b2', name: 'Ghee Roast Masala Dosa', price: 274, desc: 'Roasted with 100% pure desi ghee on seasoned cast iron tawas' },
+  { id: 'b3', name: 'Mysore Kara Masala Dosa', price: 213, desc: 'Lined with authentic red chili-garlic kara paste & spiced potatoes' },
+  { id: 'b4', name: 'Special Cheese Masala Dosa', price: 293, desc: 'Loaded with rich melted cheese & aromatic potato bhaji filling' },
   { id: 'b5', name: 'Podi Seeragam Set Dosa', price: 221, desc: 'Soft fluffy set dosas sprinkled with aromatic gun powder podi' },
 ]
 
 const CHUTNEYS = [
-  { id: 'c1', name: 'Fresh Coconut Chutney' },
-  { id: 'c2', name: 'Spicy Tomato-Garlic Chutney' },
-  { id: 'c3', name: 'Mint-Coriander Chutney' },
-  { id: 'c4', name: 'Signature Vegetable Sambhar' },
+  { id: 'c1', name: 'Thenkai (Fresh Coconut) Chutney' },
+  { id: 'c2', name: 'Karapodi (Spicy Tomato-Garlic) Chutney' },
+  { id: 'c3', name: 'Pudina (Mint-Coriander) Chutney' },
+  { id: 'c4', name: 'Traditional Vegetable Lentil Sambhar' },
 ]
 
 const SIDES: SideItem[] = [
-  { id: 's0', name: 'No Side (Classic Plate)', price: 0 },
-  { id: 's1', name: 'Button Idli Fry (6 pcs)', price: 163 },
-  { id: 's2', name: 'Crispy Medu Vada (2 pcs)', price: 166 },
+  { id: 's0', name: 'No Starter (Classic Dosa Plate)', price: 0 },
+  { id: 's1', name: 'Podi Button Idli Fry (6 pcs)', price: 163 },
+  { id: 's2', name: 'Crispy Ulundu Medu Vada (2 pcs)', price: 166 },
   { id: 's3', name: 'Ghee Veggie Rawa Upma', price: 199 },
 ]
 
 const DRINKS: DrinkItem[] = [
   { id: 'd0', name: 'No Beverage', price: 0 },
-  { id: 'd1', name: 'Davidoff Cold Coffee', price: 190 },
-  { id: 'd2', name: 'Swadeshi Buttermilk', price: 99 },
-  { id: 'd3', name: 'Sangam Lassi', price: 149 },
-  { id: 'd4', name: 'Lemon Iced Tea', price: 149 },
+  { id: 'd1', name: 'Degree Filter Kapi (Cold Coffee)', price: 190 },
+  { id: 'd2', name: 'Swadeshi Neer Mor (Buttermilk)', price: 99 },
+  { id: 'd3', name: 'Madurai Sangam Lassi', price: 149 },
+  { id: 'd4', name: 'Fresh Lemon Iced Tea', price: 149 },
 ]
 
 export function DosaBuilder() {
@@ -81,7 +81,7 @@ export function DosaBuilder() {
     try {
       const stored = localStorage.getItem('meenu-dosa-cart')
       const cart = stored ? JSON.parse(stored) : {}
-      const comboId = `dosas-0` // Map to primary dish in cart
+      const comboId = `dosas-0`
       cart[comboId] = (cart[comboId] || 0) + 1
       localStorage.setItem('meenu-dosa-cart', JSON.stringify(cart))
       setAddedCombo(true)
@@ -92,23 +92,23 @@ export function DosaBuilder() {
   }
 
   return (
-    <section className="relative overflow-hidden rounded-[2.5rem] border border-amber-500/30 bg-card p-6 shadow-2xl transition-all sm:p-10">
+    <section className="relative overflow-hidden rounded-[2.5rem] border border-amber-500/35 bg-card p-6 shadow-2xl transition-all sm:p-10 kolam-pattern">
       {/* Background ambient glow */}
       <div className="pointer-events-none absolute -right-20 -top-20 size-80 rounded-full bg-amber-500/10 blur-3xl" />
-      <div className="pointer-events-none absolute -bottom-20 -left-20 size-80 rounded-full bg-emerald-500/10 blur-3xl" />
+      <div className="pointer-events-none absolute -bottom-20 -left-20 size-80 rounded-full bg-emerald-500/15 blur-3xl" />
 
       <div className="relative z-10">
-        {/* Clarification Banner for Single Items vs Combos */}
-        <div className="mb-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 rounded-2xl border border-amber-500/25 bg-amber-500/10 p-3.5 px-4 text-xs">
-          <div className="flex items-center gap-2 text-amber-700 dark:text-amber-300">
-            <Info size={16} className="shrink-0 text-amber-500" />
+        {/* Clarification Banner */}
+        <div className="mb-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 rounded-2xl border border-emerald-500/30 bg-emerald-500/10 p-3.5 px-4 text-xs">
+          <div className="flex items-center gap-2 text-emerald-800 dark:text-emerald-300">
+            <Info size={16} className="shrink-0 text-emerald-600" />
             <span>
-              <strong>Note:</strong> You can order <strong>single items</strong> (just a Dosa, Idli or Coffee) as well as custom combos!
+              <strong>Vanakkam Note:</strong> You can order <strong>single items</strong> (just a Dosa, Idli or Kapi) as well as custom Ela Sappadu combos!
             </span>
           </div>
           <Link
             href="/menu"
-            className="inline-flex shrink-0 items-center gap-1 font-bold text-amber-600 dark:text-amber-400 hover:underline"
+            className="inline-flex shrink-0 items-center gap-1 font-bold text-amber-700 dark:text-amber-300 hover:underline"
           >
             Order Single Items Ala-Carte <ArrowRight size={14} />
           </Link>
@@ -116,20 +116,20 @@ export function DosaBuilder() {
 
         <div className="flex flex-col justify-between gap-4 md:flex-row md:items-center">
           <div>
-            <span className="inline-flex items-center gap-2 rounded-full border border-amber-500/30 bg-amber-500/10 px-3.5 py-1 text-xs font-bold text-amber-600 dark:text-amber-400">
-              <Sparkles size={14} className="animate-spin" /> Custom Combo Creator
+            <span className="inline-flex items-center gap-2 rounded-full border border-amber-500/40 bg-amber-500/10 px-3.5 py-1 text-xs font-bold text-amber-700 dark:text-amber-300">
+              <Sparkles size={14} className="animate-spin text-amber-500" /> Namma Ela Sappadu (Meal Plate Creator)
             </span>
             <h2 className="mt-2 text-2xl font-black tracking-tight sm:text-4xl">
-              Craft Your Perfect South Indian Meal Plate
+              Craft Your Banana-Leaf Dining Combo
             </h2>
             <p className="mt-1 text-sm text-muted-foreground">
-              Customize your Dosa, chutneys, side treats & drinks — or order individual items anytime!
+              Select your Tosa Dosa, fresh chutneys, side starters & Kapi — or order individual single dishes anytime!
             </p>
           </div>
 
           <div className="flex flex-wrap items-center gap-3 rounded-2xl border border-amber-500/30 bg-amber-500/10 p-4">
             <div>
-              <p className="text-[10px] uppercase font-bold text-muted-foreground">Combo Price</p>
+              <p className="text-[10px] uppercase font-bold text-muted-foreground">Ela Sappadu Combo Price</p>
               <p className="text-2xl font-black text-amber-600 dark:text-amber-400">₹{totalPrice}</p>
             </div>
             <div className="flex items-center gap-2">
@@ -154,10 +154,10 @@ export function DosaBuilder() {
 
         <div className="mt-8 grid gap-8 lg:grid-cols-3">
           {/* Step 1: Dosa Base */}
-          <div className="rounded-2xl border bg-background/80 p-5 backdrop-blur-sm">
-            <h3 className="flex items-center gap-2 text-base font-black text-amber-600 dark:text-amber-400">
-              <span className="grid size-6 place-items-center rounded-full bg-amber-500 text-xs font-bold text-white">1</span>
-              Choose Dosa Base
+          <div className="rounded-2xl border bg-background/85 p-5 backdrop-blur-sm">
+            <h3 className="flex items-center gap-2 text-base font-black text-amber-700 dark:text-amber-300">
+              <span className="grid size-6 place-items-center rounded-full gold-gradient-bg text-xs font-bold text-white">1</span>
+              Choose Signature Tawa Dosa
             </h3>
             <div className="mt-4 flex flex-col gap-2.5">
               {DOSA_BASES.map(b => (
@@ -184,11 +184,11 @@ export function DosaBuilder() {
           </div>
 
           {/* Step 2: Chutneys & Sambhar */}
-          <div className="rounded-2xl border bg-background/80 p-5 backdrop-blur-sm">
+          <div className="rounded-2xl border bg-background/85 p-5 backdrop-blur-sm">
             <div className="flex items-center justify-between">
-              <h3 className="flex items-center gap-2 text-base font-black text-amber-600 dark:text-amber-400">
-                <span className="grid size-6 place-items-center rounded-full bg-amber-500 text-xs font-bold text-white">2</span>
-                Chutneys & Accompaniments
+              <h3 className="flex items-center gap-2 text-base font-black text-amber-700 dark:text-amber-300">
+                <span className="grid size-6 place-items-center rounded-full gold-gradient-bg text-xs font-bold text-white">2</span>
+                Namma Chutney Trio & Sambhar
               </h3>
               {selectedChutneys.length > 0 && (
                 <button
@@ -200,7 +200,7 @@ export function DosaBuilder() {
                 </button>
               )}
             </div>
-            <p className="mt-1 text-xs text-muted-foreground">Tap to add or remove chutneys:</p>
+            <p className="mt-1 text-xs text-muted-foreground">Complimentary with your meal plate:</p>
 
             <div className="mt-4 flex flex-col gap-2.5">
               {CHUTNEYS.map(c => {
@@ -212,14 +212,14 @@ export function DosaBuilder() {
                     onClick={() => toggleChutney(c.id)}
                     className={`flex items-center justify-between rounded-xl border p-3 transition ${
                       isSelected
-                        ? 'border-emerald-500/60 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300'
+                        ? 'border-emerald-500/60 bg-emerald-500/10 text-emerald-800 dark:text-emerald-300'
                         : 'border-border opacity-50 hover:opacity-90'
                     }`}
                   >
                     <span className="text-sm font-semibold flex items-center gap-2">
                       <Utensils size={14} /> {c.name}
                     </span>
-                    <span className={`grid size-6 place-items-center rounded-full ${isSelected ? 'bg-emerald-500 text-white' : 'border'}`}>
+                    <span className={`grid size-6 place-items-center rounded-full ${isSelected ? 'bg-emerald-600 text-white' : 'border'}`}>
                       {isSelected ? <Check size={12} /> : <Plus size={12} />}
                     </span>
                   </button>
@@ -227,11 +227,11 @@ export function DosaBuilder() {
               })}
             </div>
 
-            {/* Side Dish Selection with Remove option */}
+            {/* Side Dish Selection */}
             <div className="mt-6 border-t border-border pt-4">
               <div className="flex items-center justify-between">
                 <h4 className="flex items-center gap-2 text-xs font-bold text-muted-foreground uppercase tracking-wider">
-                  Add Side Starter
+                  Add South Indian Starter
                 </h4>
                 {selectedSide.price > 0 && (
                   <button
@@ -239,7 +239,7 @@ export function DosaBuilder() {
                     onClick={() => setSelectedSide(SIDES[0])}
                     className="text-[11px] font-bold text-red-500 hover:underline flex items-center gap-1"
                   >
-                    <X size={12} /> Remove Side
+                    <X size={12} /> Remove Starter
                   </button>
                 )}
               </div>
@@ -265,12 +265,12 @@ export function DosaBuilder() {
           </div>
 
           {/* Step 3: Beverage & Live Summary */}
-          <div className="rounded-2xl border bg-background/80 p-5 backdrop-blur-sm flex flex-col justify-between">
+          <div className="rounded-2xl border bg-background/85 p-5 backdrop-blur-sm flex flex-col justify-between">
             <div>
               <div className="flex items-center justify-between">
-                <h3 className="flex items-center gap-2 text-base font-black text-amber-600 dark:text-amber-400">
-                  <span className="grid size-6 place-items-center rounded-full bg-amber-500 text-xs font-bold text-white">3</span>
-                  Chilled Beverage
+                <h3 className="flex items-center gap-2 text-base font-black text-amber-700 dark:text-amber-300">
+                  <span className="grid size-6 place-items-center rounded-full gold-gradient-bg text-xs font-bold text-white">3</span>
+                  Degree Kapi / Beverage
                 </h3>
                 {selectedDrink.price > 0 && (
                   <button
@@ -296,7 +296,7 @@ export function DosaBuilder() {
                     }`}
                   >
                     <span className="flex items-center gap-1.5">
-                      <Coffee size={14} className="text-amber-500" /> {d.name}
+                      <Coffee size={14} className="text-amber-600" /> {d.name}
                     </span>
                     <span className="font-bold text-muted-foreground">{d.price > 0 ? `+₹${d.price}` : 'None'}</span>
                   </button>
@@ -304,10 +304,10 @@ export function DosaBuilder() {
               </div>
             </div>
 
-            {/* Live Meal Card Summary with Reset option */}
+            {/* Live Meal Card Summary */}
             <div className="mt-6 rounded-xl border border-amber-500/30 bg-amber-500/5 p-4">
               <div className="flex items-center justify-between text-xs font-bold border-b border-amber-500/20 pb-2">
-                <span className="text-amber-600 dark:text-amber-400">Meal Plate Summary</span>
+                <span className="text-amber-700 dark:text-amber-300">Ela Sappadu Meal Summary</span>
                 <button
                   type="button"
                   onClick={resetSelection}
@@ -327,7 +327,7 @@ export function DosaBuilder() {
                 {selectedSide.price > 0 ? (
                   <li className="flex items-center justify-between">
                     <span className="flex items-center gap-1">
-                      • Side: {selectedSide.name}
+                      • Starter: {selectedSide.name}
                       <button type="button" onClick={() => setSelectedSide(SIDES[0])} className="text-red-500 hover:opacity-80">
                         <X size={12} />
                       </button>
@@ -335,7 +335,7 @@ export function DosaBuilder() {
                     <span className="font-bold">+₹{selectedSide.price}</span>
                   </li>
                 ) : (
-                  <li className="text-[11px] italic opacity-60">• Side: None</li>
+                  <li className="text-[11px] italic opacity-60">• Starter: None</li>
                 )}
 
                 {selectedDrink.price > 0 ? (
@@ -349,7 +349,7 @@ export function DosaBuilder() {
                     <span className="font-bold">+₹{selectedDrink.price}</span>
                   </li>
                 ) : (
-                  <li className="text-[11px] italic opacity-60">• Drink: None</li>
+                  <li className="text-[11px] italic opacity-60">• Beverage: None</li>
                 )}
 
                 <li className="flex items-center justify-between pt-1">
@@ -359,7 +359,7 @@ export function DosaBuilder() {
               </ul>
 
               <div className="mt-3 flex items-center justify-between border-t border-amber-500/20 pt-2 text-sm font-black">
-                <span>Total:</span>
+                <span>Total Combo Price:</span>
                 <span className="text-amber-600 dark:text-amber-400">₹{totalPrice}</span>
               </div>
             </div>
@@ -369,13 +369,13 @@ export function DosaBuilder() {
         {/* Quick Ala-Carte Order Footer Strip */}
         <div className="mt-8 flex flex-col sm:flex-row items-center justify-between gap-4 rounded-2xl border border-border bg-background p-4 text-xs font-semibold">
           <p className="text-muted-foreground">
-            💡 Prefer ordering individual single items? You can order single Dosas, Idlis, Coffee & Sweets anytime.
+            💡 Prefer ordering individual single items? You can order single Dosas, Idlis, Filter Coffee & Sweets anytime.
           </p>
           <Link
             href="/menu"
-            className="rounded-xl border border-amber-500/40 bg-amber-500/10 px-4 py-2.5 font-extrabold text-amber-600 dark:text-amber-400 hover:bg-amber-500 hover:text-white transition shrink-0"
+            className="rounded-xl border border-amber-500/40 bg-amber-500/10 px-4 py-2.5 font-extrabold text-amber-700 dark:text-amber-300 hover:bg-amber-500 hover:text-white transition shrink-0"
           >
-            Browse Full Ala-Carte Menu →
+            Browse Full Namma Menu →
           </Link>
         </div>
       </div>
