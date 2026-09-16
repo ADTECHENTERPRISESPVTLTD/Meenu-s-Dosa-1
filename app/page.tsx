@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { ArrowRight, MapPin, Phone, Sparkles, Star, ShieldCheck, Flame, Clock, Leaf, UtensilsCrossed, Heart, MessageCircle } from 'lucide-react'
+import { ArrowRight, MapPin, Phone, Sparkles, Star, ShieldCheck, Flame, Clock, Leaf, UtensilsCrossed, Coffee, Check, MessageCircle } from 'lucide-react'
 import { categories, siteConfig } from '@/lib/data'
 import { CategoryImage, Shell } from '@/components/site-shell'
 import { DosaBuilder } from '@/components/dosa-builder'
@@ -8,24 +8,47 @@ export default function Home() {
   return (
     <Shell>
       {/* Hero Section */}
-      <section className="relative overflow-hidden py-12 md:py-20">
-        {/* Background glow graphics */}
-        <div className="pointer-events-none absolute left-1/2 top-0 -z-10 -translate-x-1/2 size-[600px] rounded-full bg-amber-500/10 blur-[120px]" />
+      <section className="relative overflow-hidden py-12 md:py-20 kolam-pattern">
+        {/* Background ambient glow */}
+        <div className="pointer-events-none absolute left-1/2 top-0 -z-10 -translate-x-1/2 size-[650px] rounded-full bg-amber-500/10 blur-[140px]" />
+        <div className="pointer-events-none absolute right-10 bottom-10 -z-10 size-[450px] rounded-full bg-emerald-500/10 blur-[130px]" />
 
         <div className="mx-auto grid max-w-7xl items-center gap-12 px-4 sm:px-6 md:grid-cols-[1.1fr_.9fr]">
           <div>
-            <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-amber-500/30 bg-amber-500/10 px-4 py-1.5 text-xs font-bold text-amber-600 dark:text-amber-400">
-              <Sparkles size={14} className="animate-pulse" /> 40-Year South Indian Heritage
+            {/* South Indian Heritage Pill */}
+            <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-amber-500/40 bg-amber-500/10 px-4 py-1.5 text-xs font-bold text-amber-700 dark:text-amber-300 shadow-sm">
+              <Sparkles size={14} className="animate-pulse text-amber-500" />
+              <span>🛕 40-Year South Indian Culinary Heritage</span>
             </div>
 
             <h1 className="max-w-2xl text-4xl font-black leading-[1.05] tracking-tight sm:text-6xl md:text-7xl">
               Authentic South Indian,{' '}
-              <span className="gold-gradient-text">Served with Soul.</span>
+              <span className="south-indian-gradient-text">Served with Soul.</span>
             </h1>
 
             <p className="mt-6 max-w-lg text-base leading-relaxed text-muted-foreground sm:text-lg">
-              {siteConfig.description} Handcrafted with natural stone-ground fermentation, pure ghee, and soda-free batter.
+              {siteConfig.description} Handcrafted with 24-hour stone-ground natural fermentation, pure ghee, and soda-free batter.
             </p>
+
+            {/* Visual South Indian Taste Highlights */}
+            <div className="mt-6 grid grid-cols-2 gap-2.5 max-w-md text-xs font-bold text-foreground">
+              <div className="flex items-center gap-2 rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-2.5 text-emerald-800 dark:text-emerald-300">
+                <Leaf size={16} className="text-emerald-600 shrink-0" />
+                <span>🍃 Banana Leaf Freshness</span>
+              </div>
+              <div className="flex items-center gap-2 rounded-xl border border-amber-500/30 bg-amber-500/10 p-2.5 text-amber-800 dark:text-amber-300">
+                <Coffee size={16} className="text-amber-600 shrink-0" />
+                <span>☕ Degree Filter Coffee</span>
+              </div>
+              <div className="flex items-center gap-2 rounded-xl border border-amber-500/30 bg-amber-500/10 p-2.5 text-amber-800 dark:text-amber-300">
+                <UtensilsCrossed size={16} className="text-amber-600 shrink-0" />
+                <span>🥥 3 Fresh Chutneys</span>
+              </div>
+              <div className="flex items-center gap-2 rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-2.5 text-emerald-800 dark:text-emerald-300">
+                <ShieldCheck size={16} className="text-emerald-600 shrink-0" />
+                <span>✨ 100% Soda-Free Batter</span>
+              </div>
+            </div>
 
             {/* CTA Action Buttons */}
             <div className="mt-8 flex flex-wrap items-center gap-4">
@@ -37,7 +60,7 @@ export default function Home() {
               </Link>
               <Link
                 href="/book"
-                className="inline-flex items-center gap-2 rounded-full border-2 border-amber-500/30 bg-card px-6 py-3.5 text-base font-bold text-foreground transition hover:border-amber-500 hover:bg-amber-500/5"
+                className="inline-flex items-center gap-2 rounded-full border-2 border-emerald-600/40 bg-card px-6 py-3.5 text-base font-bold text-foreground transition hover:border-emerald-600 hover:bg-emerald-500/5"
               >
                 Book a Table
               </Link>
@@ -49,46 +72,42 @@ export default function Home() {
               </Link>
             </div>
 
-            {/* Micro proof badges */}
+            {/* Proof badges */}
             <div className="mt-10 flex flex-wrap items-center gap-6 border-t border-amber-500/20 pt-6 text-xs font-semibold text-muted-foreground">
               <span className="inline-flex items-center gap-2">
                 <Star size={16} className="text-amber-500 fill-amber-500" />
-                <strong className="text-foreground">4.9 / 5</strong> (2,500+ Reviews)
+                <strong className="text-foreground">4.9 / 5</strong> (2,500+ Reviews on Zomato & Swiggy)
               </span>
               <span className="inline-flex items-center gap-2">
                 <Leaf size={16} className="text-emerald-500" />
-                100% Pure Vegetarian
-              </span>
-              <span className="inline-flex items-center gap-2">
-                <ShieldCheck size={16} className="text-amber-500" />
-                Soda-Free Fluffy Idlis
+                100% Pure Vegetarian Kitchen
               </span>
             </div>
           </div>
 
           {/* Hero Image Spotlight */}
           <div className="relative">
-            <div className="relative aspect-[4/3] overflow-hidden rounded-[2.5rem] border-8 border-background shadow-2xl shadow-amber-500/10">
+            <div className="relative aspect-[4/3] overflow-hidden rounded-[2.5rem] border-8 border-background shadow-2xl shadow-amber-500/15">
               <CategoryImage src="dosa.jpg" alt="Golden masala dosa served with chutney and sambar" />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/65 via-transparent to-transparent" />
             </div>
 
             {/* Floating Glass Badges */}
-            <div className="absolute -bottom-6 -left-4 rounded-2xl border border-amber-500/30 bg-card/90 p-4 shadow-xl backdrop-blur-md">
+            <div className="absolute -bottom-6 -left-4 rounded-2xl border border-amber-500/40 bg-card/95 p-4 shadow-2xl backdrop-blur-md">
               <div className="flex items-center gap-3">
-                <div className="grid size-10 place-items-center rounded-xl bg-amber-500 text-white">
-                  <Flame size={20} />
+                <div className="grid size-11 place-items-center rounded-2xl gold-gradient-bg text-white shadow-md">
+                  <Flame size={22} />
                 </div>
                 <div>
-                  <p className="text-[10px] font-bold uppercase tracking-widest text-amber-600 dark:text-amber-400">Made Fresh</p>
-                  <p className="font-extrabold text-sm">Crisp. Golden. Comforting.</p>
+                  <p className="text-[10px] font-bold uppercase tracking-widest text-amber-600 dark:text-amber-400">Handcrafted Every Order</p>
+                  <p className="font-black text-sm">Crisp. Golden. Pure Ghee.</p>
                 </div>
               </div>
             </div>
 
-            <div className="absolute -right-4 -top-4 rounded-2xl border border-emerald-500/30 bg-card/90 p-3 shadow-xl backdrop-blur-md hidden sm:block">
-              <div className="flex items-center gap-2.5 text-xs font-bold text-emerald-600 dark:text-emerald-400">
-                <Leaf size={16} /> 100% Natural Fermentation
+            <div className="absolute -right-4 -top-4 rounded-2xl border border-emerald-500/40 bg-card/95 p-3.5 shadow-2xl backdrop-blur-md hidden sm:block">
+              <div className="flex items-center gap-2 text-xs font-bold text-emerald-600 dark:text-emerald-400">
+                <Leaf size={18} /> Served Fresh on Banana Leaf Style
               </div>
             </div>
           </div>
@@ -96,24 +115,24 @@ export default function Home() {
       </section>
 
       {/* Stats Banner Strip */}
-      <section className="border-y border-amber-500/20 bg-amber-500/5 py-8">
+      <section className="border-y border-amber-500/20 bg-gradient-to-r from-amber-500/10 via-emerald-500/5 to-amber-500/10 py-8">
         <div className="mx-auto max-w-7xl px-4 sm:px-6">
           <div className="grid grid-cols-2 gap-6 md:grid-cols-4 text-center">
             <div>
-              <p className="text-3xl sm:text-4xl font-black gold-gradient-text">40+</p>
+              <p className="text-3xl sm:text-4xl font-black south-indian-gradient-text">40+</p>
               <p className="mt-1 text-xs font-bold uppercase tracking-wider text-muted-foreground">Years Heritage</p>
             </div>
             <div>
-              <p className="text-3xl sm:text-4xl font-black gold-gradient-text">100%</p>
+              <p className="text-3xl sm:text-4xl font-black south-indian-gradient-text">100%</p>
               <p className="mt-1 text-xs font-bold uppercase tracking-wider text-muted-foreground">Pure Vegetarian</p>
             </div>
             <div>
-              <p className="text-3xl sm:text-4xl font-black gold-gradient-text">2</p>
+              <p className="text-3xl sm:text-4xl font-black south-indian-gradient-text">2</p>
               <p className="mt-1 text-xs font-bold uppercase tracking-wider text-muted-foreground">Outlets in Bhopal</p>
             </div>
             <div>
-              <p className="text-3xl sm:text-4xl font-black gold-gradient-text">30+</p>
-              <p className="mt-1 text-xs font-bold uppercase tracking-wider text-muted-foreground">Authentic Dishes</p>
+              <p className="text-3xl sm:text-4xl font-black south-indian-gradient-text">30+</p>
+              <p className="mt-1 text-xs font-bold uppercase tracking-wider text-muted-foreground">Authentic Recipes</p>
             </div>
           </div>
         </div>
@@ -124,8 +143,64 @@ export default function Home() {
         <DosaBuilder />
       </section>
 
+      {/* 4 Pillars of South Indian Taste Section */}
+      <section className="bg-muted/40 py-16 sm:py-20 border-y border-amber-500/20">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6">
+          <div className="text-center max-w-2xl mx-auto">
+            <span className="inline-flex items-center gap-2 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-3.5 py-1 text-xs font-bold text-emerald-700 dark:text-emerald-300">
+              <Leaf size={14} /> Culinary Pillars
+            </span>
+            <h2 className="mt-3 text-3xl font-black tracking-tight sm:text-5xl">
+              The Secret of Authentic Flavour
+            </h2>
+            <p className="mt-2 text-sm text-muted-foreground">
+              What makes Meenu&apos;s Dosa a beloved dining destination in Bhopal for four decades.
+            </p>
+          </div>
+
+          <div className="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+            {[
+              {
+                icon: '🍃',
+                title: 'Banana Leaf Tradition',
+                desc: 'Plates served with fresh leaf aroma, giving authentic South Indian dining vibes.',
+              },
+              {
+                icon: '☕',
+                title: 'Degree Filter Coffee',
+                desc: 'Brewed fresh with dark roast chicory beans & served in brass dabara cups.',
+              },
+              {
+                icon: '🥥',
+                title: 'Fresh Chutney Trio',
+                desc: 'Coconut, Tomato-Garlic & Mint-Coriander chutneys churned 4 times daily.',
+              },
+              {
+                icon: '🫓',
+                title: 'Seasoned Tawa Crunch',
+                desc: 'Batter spread thin on seasoned cast iron tawas with pure golden ghee.',
+              },
+            ].map((pillar, i) => (
+              <div
+                key={i}
+                className="rounded-3xl border border-amber-500/20 bg-card p-6 shadow-md transition hover:border-amber-500/50 hover:shadow-xl flex flex-col justify-between"
+              >
+                <div>
+                  <span className="text-4xl block mb-4">{pillar.icon}</span>
+                  <h3 className="font-extrabold text-lg">{pillar.title}</h3>
+                  <p className="mt-2 text-xs text-muted-foreground leading-relaxed">{pillar.desc}</p>
+                </div>
+                <div className="mt-6 flex items-center gap-1 text-[11px] font-bold text-emerald-600 dark:text-emerald-400">
+                  <Check size={14} /> 100% Authentic Guarantee
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
       {/* Menu Categories at a glance */}
-      <section className="mx-auto max-w-7xl px-4 py-12 sm:px-6 md:py-16">
+      <section className="mx-auto max-w-7xl px-4 py-16 sm:px-6 md:py-20">
         <div className="flex flex-col justify-between gap-4 md:flex-row md:items-end">
           <div>
             <p className="text-xs font-extrabold uppercase tracking-[0.2em] text-amber-600 dark:text-amber-400">
@@ -176,8 +251,8 @@ export default function Home() {
           <div className="grid md:grid-cols-[1fr_1.1fr]">
             <div className="relative aspect-[4/3] md:aspect-auto">
               <CategoryImage src="dosa.jpg" alt="Butter Masala Dosa" className="h-full w-full object-cover" />
-              <div className="absolute top-4 left-4 rounded-full bg-amber-500 px-3 py-1 text-xs font-black text-white shadow-lg">
-                🔥 Chef&apos;s Signature Pick
+              <div className="absolute top-4 left-4 rounded-full gold-gradient-bg px-3.5 py-1.5 text-xs font-black text-white shadow-lg flex items-center gap-1.5">
+                <Flame size={14} /> Chef&apos;s Signature Pick
               </div>
             </div>
             <div className="p-8 sm:p-12 flex flex-col justify-between">
@@ -191,7 +266,7 @@ export default function Home() {
                   Crisp golden dosa stuffed with spiced potato masala, roasted with pure desi butter on seasoned cast iron tawas. Served hot with fresh coconut chutney & lentil sambhar.
                 </p>
 
-                <div className="mt-6 flex flex-wrap gap-4 text-xs font-bold text-muted-foreground">
+                <div className="mt-6 flex flex-wrap gap-3 text-xs font-bold text-muted-foreground">
                   <span className="inline-flex items-center gap-1 bg-muted px-3 py-1.5 rounded-lg">🌶️ Mildly Spiced</span>
                   <span className="inline-flex items-center gap-1 bg-muted px-3 py-1.5 rounded-lg">⏱️ 12 Mins Preparation</span>
                   <span className="inline-flex items-center gap-1 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 px-3 py-1.5 rounded-lg">🍃 100% Pure Veg</span>
@@ -201,7 +276,7 @@ export default function Home() {
               <div className="mt-8 flex flex-wrap gap-3">
                 <Link
                   href="/menu"
-                  className="rounded-full gold-gradient-bg px-6 py-3.5 text-sm font-bold text-white shadow-md shadow-amber-500/20"
+                  className="rounded-full gold-gradient-bg px-6 py-3.5 text-sm font-bold text-white shadow-md shadow-amber-500/20 hover:scale-105 transition"
                 >
                   Order Dish Now <ArrowRight className="inline ml-1" size={16} />
                 </Link>
