@@ -88,26 +88,60 @@ export function Header() {
           </button>
         </nav>
 
-        {/* Mobile Nav - Horizontal Scroll */}
-        <nav aria-label="Primary navigation" className="flex items-center gap-2 overflow-x-auto pb-2 lg:hidden -mx-4 px-4">
-          {navLinks.map((l) => (
-            <Link
-              key={l.href}
-              href={l.href}
-              onClick={() => setOpen(false)}
-              className="whitespace-nowrap shrink-0 rounded-full px-3.5 py-2 text-xs font-extrabold text-muted-foreground transition-all hover:bg-amber-500/10 hover:text-amber-600 dark:hover:text-amber-400"
-            >
-              {l.label}
-            </Link>
-          ))}
-          <Link
-            href="/book"
-            onClick={() => setOpen(false)}
-            className="whitespace-nowrap shrink-0 rounded-full gold-gradient-bg px-5 py-2.5 text-xs font-black text-white shadow-md shadow-amber-500/20 transition hover:opacity-95 hover:scale-105 active:scale-95"
-          >
-            Book a Table
-          </Link>
+        {/* Mobile Nav - Slide-out Drawer from Right */}
+        <nav aria-label="Mobile navigation" className="fixed inset-y-0 right-0 z-50 lg:hidden w-full max-w-sm transform transition-transform duration-300 ease-in-out" style={{ transform: open ? 'translateX(0)' : 'translateX(100%)' }}>
+          <div className="absolute inset-0 bg-black/60 backdrop-blur-md" onClick={() => setOpen(false)} />
+          <div className="relative h-full bg-background shadow-2xl flex flex-col border-l border-amber-500/20">
+            <div className="flex items-center justify-between border-b border-border px-5 py-5">
+              <div>
+                <span className="text-lg font-black south-indian-gradient-text">{siteConfig.name}</span>
+                <p className="text-[10px] font-bold text-emerald-600">🙏 Vanakkam & Welcome!</p>
+              </div>
+              <button
+                aria-label="Close navigation"
+                onClick={() => setOpen(false)}
+                className="grid size-9 place-items-center rounded-full bg-amber-500 text-white"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            <div className="flex flex-col gap-1 px-4 py-6 flex-1 overflow-y-auto">
+              {navLinks.map((l) => (
+                <Link
+                  onClick={() => setOpen(false)}
+                  key={l.href}
+                  href={l.href}
+                  className="rounded-xl px-4 py-3 text-base font-bold transition hover:bg-amber-500/10 hover:text-amber-600"
+                >
+                  {l.label}
+                </Link>
+              ))}
+            </div>
+
+            <div className="p-5 border-t border-border flex flex-col gap-3">
+              <Link
+                onClick={() => setOpen(false)}
+                href="/book"
+                className="rounded-2xl gold-gradient-bg px-4 py-3.5 text-center text-base font-bold text-white shadow-md shadow-amber-500/20"
+              >
+                Book a Table
+              </Link>
+              <Link
+                onClick={() => setOpen(false)}
+                href="/admin/login"
+                className="inline-flex items-center justify-center gap-2 rounded-2xl border border-amber-500/40 bg-amber-500/10 px-4 py-3 text-base font-bold text-amber-600 dark:text-amber-400"
+              >
+                <Shield size={18} /> Admin Portal
+              </Link>
+            </div>
+          </div>
         </nav>
+
+        {/* Mobile Nav Overlay */}
+        {open && (
+          <div className="fixed inset-0 z-40 lg:hidden bg-black/50" onClick={() => setOpen(false)} />
+        )}
 
         {/* Mobile controls */}
         <div className="flex items-center gap-2 lg:hidden">
@@ -123,6 +157,15 @@ export function Header() {
             className="rounded-full border p-2 text-muted-foreground"
           >
             {dark ? <Sun size={16} className="text-amber-400" /> : <Moon size={16} />}
+          </button>
+          <button
+            aria-expanded={open}
+            aria-controls="mobile-navigation"
+            aria-label={open ? 'Close navigation' : 'Open navigation'}
+            onClick={() => setOpen(!open)}
+            className="grid size-10 place-items-center rounded-2xl gold-gradient-bg text-white shadow-md shadow-amber-500/20"
+          >
+            {open ? <X size={20} /> : <Menu size={20} />}
           </button>
         </div>
       </div>

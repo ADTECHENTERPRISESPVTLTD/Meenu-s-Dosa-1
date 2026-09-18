@@ -91,9 +91,9 @@ export default function MenuPage() {
           </div>
 
           {cartCount > 0 && (
-            <div className="flex items-center gap-4 rounded-2xl border border-amber-500/40 bg-card p-4 shadow-xl shadow-amber-500/10">
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 rounded-2xl border border-amber-500/40 bg-card p-4 shadow-xl shadow-amber-500/10">
               <div className="flex items-center gap-3">
-                <div className="grid size-10 place-items-center rounded-xl bg-amber-500 text-white">
+                <div className="grid size-10 place-items-center rounded-xl bg-amber-500 text-white shrink-0">
                   <ShoppingBag size={20} />
                 </div>
                 <div>
@@ -104,7 +104,7 @@ export default function MenuPage() {
               <button
                 type="button"
                 onClick={() => setOpen(true)}
-                className="rounded-xl gold-gradient-bg px-5 py-2.5 text-sm font-bold text-white shadow-md hover:scale-105 active:scale-95 transition"
+                className="rounded-xl gold-gradient-bg px-5 py-2.5 text-sm font-bold text-white shadow-md hover:scale-105 active:scale-95 transition shrink-0"
               >
                 Review Order
               </button>
@@ -265,9 +265,10 @@ export default function MenuPage() {
 
         {/* Slide-over Cart & Checkout Drawer */}
         {cartCount > 0 && (
-          <div className="fixed inset-x-0 bottom-0 z-40">
-            <div className="mx-auto max-w-7xl px-4 pb-4 sm:px-6">
-              <div className="rounded-3xl border border-amber-500/40 bg-card shadow-2xl backdrop-blur-lg">
+          <div className="fixed inset-0 z-40 lg:inset-x-auto lg:bottom-0 lg:top-auto lg:right-4 lg:w-96 lg:max-h-[80vh]">
+            <div className="lg:hidden absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => { setOpen(false); setPaymentMethod(null); }} />
+            <div className="mx-auto max-w-7xl px-4 pb-4 sm:px-6 lg:mx-0 lg:max-w-none lg:px-0">
+              <div className="rounded-3xl border border-amber-500/40 bg-card shadow-2xl backdrop-blur-lg lg:w-full lg:max-w-xs lg:rounded-xl lg:border-lg:shadow-xl">
                 <div className="flex items-center justify-between border-b border-border px-5 py-4">
                   <button
                     type="button"
@@ -280,9 +281,13 @@ export default function MenuPage() {
                     <span className="grid size-10 place-items-center rounded-2xl gold-gradient-bg text-white shadow-md">
                       <ShoppingBag className="size-5" />
                     </span>
-                    <div>
+                    <div className="hidden sm:block">
                       <p className="text-sm font-black">{cartCount} Items Selected</p>
                       <p className="text-xs text-amber-600 dark:text-amber-400 font-bold">{formatPrice(cartTotal)} Total</p>
+                    </div>
+                    <div className="sm:hidden">
+                      <p className="text-sm font-black">{cartCount} Items</p>
+                      <p className="text-xs text-amber-600 dark:text-amber-400 font-bold">{formatPrice(cartTotal)}</p>
                     </div>
                   </button>
 
@@ -301,15 +306,26 @@ export default function MenuPage() {
                         setOpen((current) => !current)
                         setPaymentMethod(null)
                       }}
-                      className="rounded-full gold-gradient-bg px-5 py-2.5 text-xs font-bold text-white shadow-md"
+                      className="rounded-full gold-gradient-bg px-5 py-2.5 text-xs font-bold text-white shadow-md hidden sm:block"
                     >
                       {open ? 'Close' : 'Checkout Order'}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setOpen((current) => !current)
+                        setPaymentMethod(null)
+                      }}
+                      className="rounded-full gold-gradient-bg p-2.5 text-white shadow-md sm:hidden"
+                      aria-label={open ? 'Close' : 'Checkout Order'}
+                    >
+                      <X size={20} />
                     </button>
                   </div>
                 </div>
 
                 {open && (
-                  <div className="max-h-[70vh] overflow-y-auto px-6 py-5">
+                  <div className="max-h-[70vh] lg:max-h-[calc(80vh-120px)] overflow-y-auto px-6 py-5 lg:px-4 lg:py-4">
                     <ul className="divide-y border-b">
                       {cartItems.map((item) => (
                         <li key={item.id} className="flex items-center justify-between gap-4 py-3">
@@ -441,6 +457,7 @@ export default function MenuPage() {
                 )}
               </div>
             </div>
+            <div className="lg:hidden fixed inset-0 z-30" />
           </div>
         )}
 
