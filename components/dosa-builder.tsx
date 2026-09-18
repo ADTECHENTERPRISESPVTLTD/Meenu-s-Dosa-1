@@ -152,7 +152,7 @@ export function DosaBuilder() {
           </div>
         </div>
 
-        <div className="mt-8 grid gap-8 lg:grid-cols-3">
+        <div className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {/* Step 1: Dosa Base */}
           <div className="rounded-2xl border bg-background/85 p-5 backdrop-blur-sm">
             <h3 className="flex items-center gap-2 text-base font-black text-amber-700 dark:text-amber-300">

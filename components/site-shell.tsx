@@ -174,7 +174,7 @@ export function Header() {
 export function Footer() {
   return (
     <footer className="border-t border-amber-500/20 bg-card/80 backdrop-blur-sm kolam-pattern">
-      <div className="mx-auto grid max-w-7xl gap-10 px-4 py-16 sm:px-6 md:grid-cols-[1.5fr_1fr_1fr_1.2fr]">
+      <div className="mx-auto grid max-w-7xl gap-10 px-4 py-16 sm:px-6 sm:grid-cols-2 md:grid-cols-[1.5fr_1fr_1fr_1.2fr]">
         <div>
           <div className="mb-4 flex items-center gap-3">
             <div className="grid size-11 place-items-center rounded-2xl gold-gradient-bg text-white font-black shadow-md shadow-amber-500/20">

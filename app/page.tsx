@@ -93,14 +93,18 @@ export default function Home() {
             </div>
 
             {/* Floating Glass Badges */}
-            <div className="absolute -bottom-6 -left-4 rounded-2xl border border-amber-500/40 bg-card/95 p-4 shadow-2xl backdrop-blur-md">
+            <div className="absolute -bottom-6 -left-4 sm:-bottom-6 sm:-left-4 rounded-2xl border border-amber-500/40 bg-card/95 p-4 shadow-2xl backdrop-blur-md sm:max-w-[200px]">
               <div className="flex items-center gap-3">
                 <div className="grid size-11 place-items-center rounded-2xl gold-gradient-bg text-white shadow-md">
                   <Flame size={22} />
                 </div>
-                <div>
+                <div className="hidden sm:block">
                   <p className="text-[10px] font-bold uppercase tracking-widest text-amber-600 dark:text-amber-400">Handcrafted Every Order</p>
                   <p className="font-black text-sm">Crisp. Golden. Pure Ghee.</p>
+                </div>
+                <div className="sm:hidden">
+                  <p className="text-[10px] font-bold text-amber-600 dark:text-amber-400">Handcrafted Every Order</p>
+                  <p className="font-black text-xs">Crisp. Golden. Pure Ghee.</p>
                 </div>
               </div>
             </div>
