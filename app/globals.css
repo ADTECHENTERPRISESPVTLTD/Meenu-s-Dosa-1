@@ -119,10 +119,31 @@
 @layer base {
   * {
     @apply border-border outline-ring/50;
+    box-sizing: border-box;
     scroll-behavior: smooth;
   }
+
+  html {
+    overflow-x: hidden;
+  }
+
   body {
     @apply bg-background text-foreground antialiased selection:bg-amber-500/30 selection:text-amber-600 dark:selection:text-amber-300;
+    overflow-x: hidden;
+  }
+
+  img,
+  video,
+  svg {
+    display: block;
+    max-width: 100%;
+    height: auto;
+  }
+}
+
+@media (max-width: 640px) {
+  .kolam-pattern {
+    background-size: 18px 18px;
   }
 }
 

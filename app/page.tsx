@@ -14,6 +14,7 @@ type OrderStatus = 'pending' | 'confirmed' | 'preparing' | 'ready' | 'delivered'
 
 export default function Home() {
   const [cart, setCart] = useState<Record<string, number>>({})
+  const [description, setDescription] = useState(siteConfig.description)
   const [open, setOpen] = useState(false)
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod | null>(null)
   const [orderPlaced, setOrderPlaced] = useState(false)
@@ -51,6 +52,15 @@ export default function Home() {
   }
 
   useEffect(() => {
+    fetch('/api/content')
+      .then((response) => response.json())
+      .then((data) => {
+        if (data.ok && data.content?.description) setDescription(data.content.description)
+      })
+      .catch(() => {})
+  }, [])
+
+  useEffect(() => {
     try {
       const stored = localStorage.getItem(CART_STORAGE_KEY)
       if (stored) setCart(JSON.parse(stored))
@@ -85,8 +95,8 @@ export default function Home() {
       {/* Hero Section */}
       <section className="relative overflow-hidden py-12 md:py-20 kolam-pattern">
         {/* Background ambient glow */}
-        <div className="pointer-events-none absolute left-1/2 top-0 -z-10 -translate-x-1/2 size-[650px] rounded-full bg-amber-500/10 blur-[140px]" />
-        <div className="pointer-events-none absolute right-10 bottom-10 -z-10 size-[450px] rounded-full bg-emerald-500/10 blur-[130px]" />
+        <div className="pointer-events-none absolute left-1/2 top-0 -z-10 -translate-x-1/2 size-[320px] rounded-full bg-amber-500/10 blur-[120px] sm:size-[500px] sm:blur-[140px] lg:size-[650px]" />
+        <div className="pointer-events-none absolute bottom-4 right-0 -z-10 size-[220px] rounded-full bg-emerald-500/10 blur-[90px] sm:bottom-10 sm:right-10 sm:size-[320px] sm:blur-[110px] lg:size-[450px] lg:blur-[130px]" />
 
         <div className="mx-auto grid max-w-7xl items-center gap-12 px-4 sm:px-6 md:grid-cols-[1.1fr_.9fr]">
           <div>
@@ -102,7 +112,7 @@ export default function Home() {
             </h1>
 
             <p className="mt-6 max-w-lg text-base leading-relaxed text-muted-foreground sm:text-lg">
-              {siteConfig.description} Handcrafted with 24-hour stone-ground natural fermentation, pure ghee, and soda-free batter.
+              {description} Handcrafted with 24-hour stone-ground natural fermentation, pure ghee, and soda-free batter.
             </p>
 
             {/* Visual South Indian Taste Highlights */}

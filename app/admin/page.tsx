@@ -388,8 +388,9 @@ export default function AdminDashboard() {
               {filteredOrders.length === 0 ? (
                 <p className="mt-6 text-sm text-muted-foreground">No orders match the current filters.</p>
               ) : (
-                <div className="mt-6 overflow-x-auto -mx-5 px-5 sm:mx-0 sm:px-0">
-                  <table className="w-full min-w-[900px] text-left text-sm">
+                <>
+                  <div className="mt-6 hidden sm:block">
+                    <table className="w-full text-left text-sm">
                     <thead className="border-b text-muted-foreground">
                       <tr>
                         <th className="pb-3">Order ID</th>
@@ -428,8 +429,43 @@ export default function AdminDashboard() {
                         </tr>
                       ))}
                     </tbody>
-                  </table>
-                </div>
+                    </table>
+                  </div>
+                  <div className="mt-6 grid gap-3 sm:hidden">
+                    {filteredOrders.map((order) => (
+                      <article key={order.id} className="rounded-2xl border bg-background p-4">
+                      <div className="flex items-start justify-between gap-3">
+                        <div>
+                          <p className="font-bold">#{order.id}</p>
+                          <p className="mt-1 text-xs text-muted-foreground">{new Date(order.date).toLocaleString()}</p>
+                        </div>
+                        <p className="font-black text-primary">{formatPrice(order.total || 0)}</p>
+                      </div>
+                      <div className="mt-3 grid grid-cols-2 gap-3 text-sm">
+                        <div>
+                          <p className="text-xs text-muted-foreground">Source</p>
+                          <p className="mt-1 capitalize font-semibold">{order.source}</p>
+                        </div>
+                        <div>
+                          <p className="text-xs text-muted-foreground">Items</p>
+                          <p className="mt-1 font-semibold">{order.items?.length || 0} items</p>
+                        </div>
+                      </div>
+                      <div className="mt-4 flex flex-wrap items-center gap-2">
+                        <button type="button" onClick={() => togglePaymentStatus(order.id)} className={`rounded-full px-3 py-1 text-xs font-bold ${order.paid ? 'bg-green-500/15 text-green-700' : 'bg-red-500/15 text-red-700'}`}>
+                          {order.paid ? 'Paid' : 'Unpaid'}
+                        </button>
+                        <select value={order.status} onChange={(e) => updateOrderStatus(order.id, e.target.value as OrderStatus)} className={`rounded-full px-3 py-1 text-xs font-bold ${STATUS_COLORS[order.status]}`}>
+                          {STATUS_OPTIONS.map((status) => <option key={status} value={status}>{status}</option>)}
+                        </select>
+                        <button onClick={() => deleteOrder(order.id)} className="ml-auto rounded-lg border p-2 text-destructive" aria-label={`Delete order ${order.id}`}>
+                          <Trash2 size={15}/>
+                        </button>
+                      </div>
+                      </article>
+                    ))}
+                  </div>
+                </>
               )}
             </section>
           )}
@@ -465,7 +501,7 @@ export default function AdminDashboard() {
                 </select>
 </div>
               <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                {menuItems.filter((item) => menuCategoryFilter === 'all' || item.category === menuCategoryFilter).slice(0, 12).map((item) => (
+                {menuItems.filter((item) => menuCategoryFilter === 'all' || item.category === menuCategoryFilter).map((item) => (
                   <div key={item.id} className="overflow-hidden rounded-2xl border bg-card">
                     <div className="relative aspect-[4/3] overflow-hidden bg-muted">
                       <img src={categoryImage(item.image)} alt={item.name} className="h-full w-full object-cover" />
@@ -519,8 +555,9 @@ export default function AdminDashboard() {
               {bookings.length === 0 ? (
                 <p className="mt-6 text-sm text-muted-foreground">No bookings yet.</p>
               ) : (
-                <div className="mt-6 overflow-x-auto -mx-5 px-5 sm:mx-0 sm:px-0">
-                  <table className="w-full min-w-[700px] text-left text-sm">
+                <>
+                  <div className="mt-6 hidden sm:block">
+                    <table className="w-full text-left text-sm">
                     <thead className="border-b text-muted-foreground">
                       <tr>
                         <th className="pb-3">ID</th>
@@ -555,8 +592,42 @@ export default function AdminDashboard() {
                         </tr>
                       ))}
                     </tbody>
-                  </table>
-                </div>
+                    </table>
+                  </div>
+                  <div className="mt-6 grid gap-3 sm:hidden">
+                    {bookings.map((booking) => (
+                      <article key={booking.id} className="rounded-2xl border bg-background p-4">
+                      <div className="flex items-start justify-between gap-3">
+                        <div>
+                          <p className="font-bold">{booking.name}</p>
+                          <p className="mt-1 text-xs text-muted-foreground">#{booking.id} · {booking.phone}</p>
+                        </div>
+                        <p className="text-right text-sm font-semibold">{booking.guests} guests</p>
+                      </div>
+                      <div className="mt-3 grid grid-cols-2 gap-3 text-sm">
+                        <div>
+                          <p className="text-xs text-muted-foreground">Date</p>
+                          <p className="mt-1 font-semibold">{booking.date}</p>
+                        </div>
+                        <div>
+                          <p className="text-xs text-muted-foreground">Time</p>
+                          <p className="mt-1 font-semibold">{booking.time}</p>
+                        </div>
+                      </div>
+                      <div className="mt-4 flex items-center gap-2">
+                        <select value={booking.status || 'pending'} onChange={(e) => updateBookingStatus(booking.id, e.target.value)} className={`min-w-0 flex-1 rounded-full px-3 py-2 text-xs font-bold ${booking.status === 'confirmed' ? 'bg-green-500/15 text-green-700' : booking.status === 'cancelled' ? 'bg-destructive/15 text-destructive' : 'bg-yellow-500/15 text-yellow-700'}`}>
+                          <option value="pending">Pending</option>
+                          <option value="confirmed">Confirmed</option>
+                          <option value="cancelled">Cancelled</option>
+                        </select>
+                        <button onClick={() => deleteBooking(booking.id)} className="rounded-lg border p-2 text-destructive" aria-label={`Delete booking ${booking.id}`}>
+                          <Trash2 size={15}/>
+                        </button>
+                      </div>
+                      </article>
+                    ))}
+                  </div>
+                </>
               )}
             </section>
           )}

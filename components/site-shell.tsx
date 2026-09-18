@@ -2,7 +2,7 @@
 import Link from 'next/link'
 import Image from 'next/image'
 import { Menu, Moon, Sun, ArrowUpRight, MessageCircle, X, Shield, Sparkles, MapPin, Phone, Heart, UtensilsCrossed, Leaf, Coffee } from 'lucide-react'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useTheme } from './theme-provider'
 import { siteConfig } from '@/lib/data'
 
@@ -18,14 +18,26 @@ const navLinks = [
 
 export function Header() {
   const [open, setOpen] = useState(false)
+  const [content, setContent] = useState({ name: siteConfig.name, tagline: siteConfig.tagline })
   const { dark, toggle } = useTheme()
+
+  useEffect(() => {
+    fetch('/api/content')
+      .then((response) => response.json())
+      .then((data) => {
+        if (data.ok && data.content) {
+          setContent({ name: data.content.name || siteConfig.name, tagline: data.content.tagline || siteConfig.tagline })
+        }
+      })
+      .catch(() => {})
+  }, [])
 
   return (
     <header className="sticky top-0 z-40 border-b border-amber-500/25 bg-background/95 backdrop-blur-md shadow-sm transition-colors">
       {/* South Indian Top Announcement Bar */}
       <div className="banana-leaf-bg py-1.5 px-4 text-center text-xs font-bold text-white tracking-wide shadow-inner flex items-center justify-center gap-2">
         <Sparkles size={13} className="animate-spin text-amber-300 shrink-0 hidden sm:inline-flex" />
-        <span className="truncate max-w-[90vw] sm:max-w-none">🙏 <strong>Vanakkam!</strong> Authentic South Indian Tawa Dosas, 100% Ghee & Soda-Free Fluffy Idlis</span>
+        <span className="truncate max-w-[90vw] sm:max-w-none">🙏 <strong>Vanakkam!</strong> {content.tagline}</span>
       </div>
 
       <div className="mx-auto flex min-h-20 max-w-7xl items-center justify-between gap-4 px-4 sm:px-6">
@@ -40,7 +52,7 @@ export function Header() {
           </div>
           <div className="hidden sm:block">
             <span className="text-xl font-black tracking-tight block south-indian-gradient-text">
-              {siteConfig.name}
+              {content.name}
             </span>
             <span className="text-[10px] uppercase font-bold tracking-widest text-emerald-700 dark:text-emerald-400 flex items-center gap-1 -mt-0.5">
               <Leaf size={10} /> 40 Years of Traditional Tawa
@@ -48,7 +60,7 @@ export function Header() {
           </div>
           <div className="sm:hidden">
             <span className="text-lg font-black tracking-tight block south-indian-gradient-text">
-              {siteConfig.name}
+              {content.name}
             </span>
           </div>
         </Link>
@@ -88,11 +100,20 @@ export function Header() {
           </button>
         </nav>
 
-        {/* Mobile Nav - Slide-out Drawer from Right */}
-        <nav aria-label="Mobile navigation" className="fixed inset-y-0 right-0 z-50 lg:hidden w-full max-w-sm transform transition-transform duration-300 ease-in-out" style={{ transform: open ? 'translateX(0)' : 'translateX(100%)' }}>
-          <div className="absolute inset-0 bg-black/60 backdrop-blur-md" onClick={() => setOpen(false)} />
-          <div className="relative h-full bg-background shadow-2xl flex flex-col border-l border-amber-500/20">
-            <div className="flex items-center justify-between border-b border-border px-5 py-5">
+        {/* Mobile Nav - Slide-out Drawer from Right (Full height, all items visible) */}
+        {open && (
+          <>
+            <div
+              className="fixed inset-0 z-[55] bg-black/60 backdrop-blur-sm lg:hidden"
+              onClick={() => setOpen(false)}
+              aria-hidden="true"
+            />
+            <nav
+              id="mobile-navigation"
+              aria-label="Mobile navigation"
+              className="fixed inset-y-0 right-0 z-[60] flex w-[min(92vw,26rem)] flex-col border-l border-amber-500/20 bg-background shadow-2xl lg:hidden"
+            >
+            <div className="flex items-center justify-between border-b border-border px-4 py-3">
               <div>
                 <span className="text-lg font-black south-indian-gradient-text">{siteConfig.name}</span>
                 <p className="text-[10px] font-bold text-emerald-600">🙏 Vanakkam & Welcome!</p>
@@ -100,47 +121,45 @@ export function Header() {
               <button
                 aria-label="Close navigation"
                 onClick={() => setOpen(false)}
-                className="grid size-9 place-items-center rounded-full bg-amber-500 text-white"
+                className="grid size-8 place-items-center rounded-full bg-amber-500 text-white"
               >
-                <X size={18} />
+                <X size={16} />
               </button>
             </div>
 
-            <div className="flex flex-col gap-1 px-4 py-6 flex-1 overflow-y-auto">
-              {navLinks.map((l) => (
+            <div className="flex flex-1 flex-col justify-between px-3 py-3 overflow-hidden">
+              <div className="flex flex-col gap-0.5">
+                {navLinks.map((l) => (
+                  <Link
+                    onClick={() => setOpen(false)}
+                    key={l.href}
+                    href={l.href}
+                    className="rounded-lg px-3 py-2 text-sm font-bold transition hover:bg-amber-500/10 hover:text-amber-600"
+                  >
+                    {l.label}
+                  </Link>
+                ))}
+              </div>
+
+              <div className="border-t border-border pt-3 flex flex-col gap-1.5">
                 <Link
                   onClick={() => setOpen(false)}
-                  key={l.href}
-                  href={l.href}
-                  className="rounded-xl px-4 py-3 text-base font-bold transition hover:bg-amber-500/10 hover:text-amber-600"
+                  href="/book"
+                  className="rounded-xl gold-gradient-bg px-3 py-2.5 text-center text-sm font-bold text-white shadow-md shadow-amber-500/20"
                 >
-                  {l.label}
+                  Book a Table
                 </Link>
-              ))}
+                <Link
+                  onClick={() => setOpen(false)}
+                  href="/admin/login"
+                  className="inline-flex items-center justify-center gap-2 rounded-xl border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-sm font-bold text-amber-600 dark:text-amber-400"
+                >
+                  <Shield size={14} /> Admin Portal
+                </Link>
+              </div>
             </div>
-
-            <div className="p-5 border-t border-border flex flex-col gap-3">
-              <Link
-                onClick={() => setOpen(false)}
-                href="/book"
-                className="rounded-2xl gold-gradient-bg px-4 py-3.5 text-center text-base font-bold text-white shadow-md shadow-amber-500/20"
-              >
-                Book a Table
-              </Link>
-              <Link
-                onClick={() => setOpen(false)}
-                href="/admin/login"
-                className="inline-flex items-center justify-center gap-2 rounded-2xl border border-amber-500/40 bg-amber-500/10 px-4 py-3 text-base font-bold text-amber-600 dark:text-amber-400"
-              >
-                <Shield size={18} /> Admin Portal
-              </Link>
-            </div>
-          </div>
-        </nav>
-
-        {/* Mobile Nav Overlay */}
-        {open && (
-          <div className="fixed inset-0 z-40 lg:hidden bg-black/50" onClick={() => setOpen(false)} />
+            </nav>
+          </>
         )}
 
         {/* Mobile controls */}
