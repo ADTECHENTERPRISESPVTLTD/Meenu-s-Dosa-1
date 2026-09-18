@@ -244,7 +244,7 @@ export function DosaBuilder() {
                 )}
               </div>
 
-              <div className="mt-2 grid grid-cols-2 gap-2">
+              <div className="mt-2 grid grid-cols-2 sm:grid-cols-4 gap-2">
                 {SIDES.map(s => (
                   <button
                     key={s.id}

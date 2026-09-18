@@ -1,10 +1,85 @@
+'use client'
+
+import { useMemo, useState, useEffect } from 'react'
 import Link from 'next/link'
-import { ArrowRight, MapPin, Phone, Sparkles, Star, ShieldCheck, Flame, Clock, Leaf, UtensilsCrossed, Coffee, Check, MessageCircle } from 'lucide-react'
-import { categories, siteConfig } from '@/lib/data'
+import { ArrowRight, MapPin, Phone, Sparkles, Star, ShieldCheck, Flame, Clock, Leaf, UtensilsCrossed, Coffee, Check, MessageCircle, ShoppingBag, Trash2, QrCode, Banknote, X } from 'lucide-react'
+import { categories, siteConfig, formatPrice, menu, type MenuItem } from '@/lib/data'
 import { CategoryImage, Shell } from '@/components/site-shell'
 import { DosaBuilder } from '@/components/dosa-builder'
 
+const CART_STORAGE_KEY = 'meenu-dosa-cart'
+
+type PaymentMethod = 'qr' | 'cash' | 'zomato' | 'swiggy'
+type OrderStatus = 'pending' | 'confirmed' | 'preparing' | 'ready' | 'delivered' | 'cancelled'
+
 export default function Home() {
+  const [cart, setCart] = useState<Record<string, number>>({})
+  const [open, setOpen] = useState(false)
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod | null>(null)
+  const [orderPlaced, setOrderPlaced] = useState(false)
+  const [lastOrderId, setLastOrderId] = useState<string | null>(null)
+
+  const saveOrder = async (method: PaymentMethod) => {
+    if (cartCount === 0) return
+    const order = {
+      id: `ORD-${Date.now().toString(36).toUpperCase()}`,
+      date: Date.now(),
+      items: cartItems.map((item) => ({ id: item.id, name: item.name, price: item.price, quantity: item.quantity })),
+      total: cartTotal,
+      paymentMethod: method,
+      source: method === 'zomato' || method === 'swiggy' ? method : 'direct',
+      status: 'pending' as OrderStatus,
+    }
+    try {
+      const res = await fetch('/api/orders', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(order),
+      })
+      const data = await res.json()
+      if (data.ok && data.order) order.id = data.order.id
+    } catch {}
+    setLastOrderId(order.id)
+    setOrderPlaced(true)
+  }
+
+  const clearCart = () => {
+    setCart({})
+    setPaymentMethod(null)
+    setOrderPlaced(false)
+    setLastOrderId(null)
+  }
+
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem(CART_STORAGE_KEY)
+      if (stored) setCart(JSON.parse(stored))
+    } catch {}
+  }, [])
+
+  useEffect(() => {
+    try { localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(cart)) } catch {}
+  }, [cart])
+
+  const updateCart = (item: MenuItem, delta: number) => setCart((current) => {
+    const count = Math.max(0, (current[item.id] ?? 0) + delta)
+    const next = { ...current }
+    if (count > 0) next[item.id] = count
+    else delete next[item.id]
+    return next
+  })
+
+  const addComboToCart = (comboItems: Array<{id: string, name: string, price: number}>) => setCart((current) => {
+    const next = { ...current }
+    comboItems.forEach(item => {
+      next[item.id] = (next[item.id] ?? 0) + 1
+    })
+    return next
+  })
+
+  const cartCount = Object.values(cart).reduce((sum, count) => sum + count, 0)
+  const cartTotal = useMemo(() => menu.reduce((sum, item) => sum + (item.price || 0) * (cart[item.id] ?? 0), 0), [cart])
+  const cartItems = useMemo(() => menu.filter((item) => (cart[item.id] ?? 0) > 0).map((item) => ({ ...item, quantity: cart[item.id] ?? 0 })), [cart])
   return (
     <Shell>
       {/* Hero Section */}
@@ -93,17 +168,17 @@ export default function Home() {
             </div>
 
             {/* Floating Glass Badges */}
-            <div className="absolute -bottom-6 -left-4 sm:-bottom-6 sm:-left-4 rounded-2xl border border-amber-500/40 bg-card/95 p-4 shadow-2xl backdrop-blur-md sm:max-w-[200px]">
+            <div className="absolute -bottom-6 -left-4 sm:-bottom-6 sm:-left-4 rounded-2xl border border-amber-500/40 bg-card/95 p-3 sm:p-4 shadow-2xl backdrop-blur-md sm:max-w-[200px] max-w-[160px]">
               <div className="flex items-center gap-3">
-                <div className="grid size-11 place-items-center rounded-2xl gold-gradient-bg text-white shadow-md">
-                  <Flame size={22} />
+                <div className="grid size-10 sm:size-11 place-items-center rounded-2xl gold-gradient-bg text-white shadow-md">
+                  <Flame size={20} className="sm:size-22" />
                 </div>
                 <div className="hidden sm:block">
                   <p className="text-[10px] font-bold uppercase tracking-widest text-amber-600 dark:text-amber-400">Handcrafted Every Order</p>
                   <p className="font-black text-sm">Crisp. Golden. Pure Ghee.</p>
                 </div>
                 <div className="sm:hidden">
-                  <p className="text-[10px] font-bold text-amber-600 dark:text-amber-400">Handcrafted Every Order</p>
+                  <p className="text-[9px] font-bold text-amber-600 dark:text-amber-400">Handcrafted Every Order</p>
                   <p className="font-black text-xs">Crisp. Golden. Pure Ghee.</p>
                 </div>
               </div>
@@ -387,6 +462,189 @@ export default function Home() {
           </div>
         </div>
       </section>
+
+      {/* Cart & Checkout Drawer */}
+      {cartCount > 0 && (
+        <div className="fixed inset-x-0 bottom-0 z-40">
+          <div className="mx-auto max-w-7xl px-4 pb-4 sm:px-6">
+            <div className="rounded-3xl border border-amber-500/40 bg-card shadow-2xl backdrop-blur-lg">
+              <div className="flex items-center justify-between border-b border-border px-5 py-4">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setOpen((current) => !current)
+                    setPaymentMethod(null)
+                  }}
+                  className="flex items-center gap-3 text-left"
+                >
+                  <span className="grid size-10 place-items-center rounded-2xl gold-gradient-bg text-white shadow-md">
+                    <ShoppingBag className="size-5" />
+                  </span>
+                  <div>
+                    <p className="text-sm font-black">{cartCount} Items Selected</p>
+                    <p className="text-xs text-amber-600 dark:text-amber-400 font-bold">{formatPrice(cartTotal)} Total</p>
+                  </div>
+                </button>
+
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={clearCart}
+                    className="rounded-full border border-red-500/30 p-2.5 text-red-500 hover:bg-red-500/10 transition"
+                    title="Clear Cart"
+                  >
+                    <Trash2 size={16} />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setOpen((current) => !current)
+                      setPaymentMethod(null)
+                    }}
+                    className="rounded-full gold-gradient-bg px-5 py-2.5 text-xs font-bold text-white shadow-md"
+                  >
+                    {open ? 'Close' : 'Checkout Order'}
+                  </button>
+                </div>
+              </div>
+
+              {open && (
+                <div className="max-h-[70vh] overflow-y-auto px-6 py-5">
+                  <ul className="divide-y border-b">
+                    {cartItems.map((item) => (
+                      <li key={item.id} className="flex items-center justify-between gap-4 py-3">
+                        <div>
+                          <p className="font-extrabold text-sm flex items-center gap-1">
+                            {item.name} <Leaf size={12} className="text-emerald-500 inline" />
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            {formatPrice(item.price)} x {item.quantity}
+                          </p>
+                        </div>
+                        <div className="flex items-center gap-3">
+                          <p className="font-black text-amber-600 dark:text-amber-400 text-sm">
+                            {formatPrice((item.price || 0) * item.quantity)}
+                          </p>
+                          <div className="flex items-center gap-1 rounded-full border p-0.5">
+                            <button
+                              type="button"
+                              onClick={() => updateCart(item, -1)}
+                              className="grid size-7 place-items-center rounded-full hover:bg-muted"
+                            >
+                              <X size={12} />
+                            </button>
+                            <span className="min-w-5 text-center text-xs font-bold">{item.quantity}</span>
+                            <button
+                              type="button"
+                              onClick={() => updateCart(item, 1)}
+                              className="grid size-7 place-items-center rounded-full bg-amber-500 text-white"
+                            >
+                              <X size={12} className="rotate-45" />
+                            </button>
+                          </div>
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+
+                  <div className="mt-4 flex items-center justify-between font-black text-lg">
+                    <span>Order Total</span>
+                    <span className="text-amber-600 dark:text-amber-400">{formatPrice(cartTotal)}</span>
+                  </div>
+
+                  {!paymentMethod ? (
+                    <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setPaymentMethod('zomato')
+                          saveOrder('zomato')
+                        }}
+                        className="flex flex-col items-center gap-2 rounded-2xl border border-red-500/30 bg-red-500/5 p-4 transition hover:bg-red-500/10"
+                      >
+                        <span className="text-base font-black text-red-600">Zomato</span>
+                        <span className="text-[10px] text-muted-foreground">Order via Zomato</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setPaymentMethod('swiggy')
+                          saveOrder('swiggy')
+                        }}
+                        className="flex flex-col items-center gap-2 rounded-2xl border border-orange-500/30 bg-orange-500/5 p-4 transition hover:bg-orange-500/10"
+                      >
+                        <span className="text-base font-black text-orange-600">Swiggy</span>
+                        <span className="text-[10px] text-muted-foreground">Order via Swiggy</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => setPaymentMethod('qr')}
+                        className="flex flex-col items-center gap-2 rounded-2xl border border-amber-500/30 bg-amber-500/5 p-4 transition hover:bg-amber-500/10"
+                      >
+                        <QrCode className="size-6 text-amber-500" />
+                        <span className="text-xs font-bold">UPI / QR Code</span>
+                        <span className="text-[10px] text-muted-foreground">Instant Pay</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => setPaymentMethod('cash')}
+                        className="flex flex-col items-center gap-2 rounded-2xl border border-emerald-500/30 bg-emerald-500/5 p-4 transition hover:bg-emerald-500/10"
+                      >
+                        <Banknote className="size-6 text-emerald-500" />
+                        <span className="text-xs font-bold">Pay at Counter</span>
+                        <span className="text-[10px] text-muted-foreground">Cash Payment</span>
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="mt-6 rounded-2xl border border-amber-500/30 bg-background p-6">
+                      {paymentMethod === 'qr' && (
+                        <div className="flex flex-col items-center text-center gap-3">
+                          <p className="font-extrabold text-base">Scan & Pay via UPI App</p>
+                          <div className="relative aspect-square w-48 overflow-hidden rounded-2xl border border-amber-500/30 bg-white p-3 shadow-md">
+                            <img src="/qr-code.png" alt="Payment QR code" className="h-full w-full object-contain" />
+                          </div>
+                          <p className="text-xs text-muted-foreground">Scan with Google Pay, PhonePe, Paytm or any UPI app</p>
+                          <p className="text-xl font-black text-amber-600 dark:text-amber-400">{formatPrice(cartTotal)}</p>
+                          <button
+                            type="button"
+                            onClick={() => saveOrder('qr')}
+                            className="rounded-full gold-gradient-bg px-6 py-3 text-xs font-bold text-white shadow-md"
+                          >
+                            Confirm QR Payment
+                          </button>
+                        </div>
+                      )}
+
+                      {paymentMethod === 'cash' && (
+                        <div className="flex flex-col items-center text-center gap-3">
+                          <p className="font-extrabold text-base">Cash Payment at Outlet</p>
+                          <p className="text-xs text-muted-foreground">Pay when your order is served at the dining table or counter.</p>
+                          <p className="text-xl font-black text-amber-600 dark:text-amber-400">{formatPrice(cartTotal)}</p>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              saveOrder('cash')
+                              setOpen(false)
+                            }}
+                            className="rounded-full gold-gradient-bg px-6 py-3 text-xs font-bold text-white shadow-md"
+                          >
+                            Place Cash Order
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      <div className="h-20" />
     </Shell>
   )
 }

@@ -24,8 +24,8 @@ export function Header() {
     <header className="sticky top-0 z-40 border-b border-amber-500/25 bg-background/95 backdrop-blur-md shadow-sm transition-colors">
       {/* South Indian Top Announcement Bar */}
       <div className="banana-leaf-bg py-1.5 px-4 text-center text-xs font-bold text-white tracking-wide shadow-inner flex items-center justify-center gap-2">
-        <Sparkles size={13} className="animate-spin text-amber-300 shrink-0" />
-        <span>🙏 <strong>Vanakkam!</strong> Authentic South Indian Tawa Dosas, 100% Ghee & Soda-Free Fluffy Idlis</span>
+        <Sparkles size={13} className="animate-spin text-amber-300 shrink-0 hidden sm:inline-flex" />
+        <span className="truncate max-w-[90vw] sm:max-w-none">🙏 <strong>Vanakkam!</strong> Authentic South Indian Tawa Dosas, 100% Ghee & Soda-Free Fluffy Idlis</span>
       </div>
 
       <div className="mx-auto flex min-h-20 max-w-7xl items-center justify-between gap-4 px-4 sm:px-6">
@@ -38,12 +38,17 @@ export function Header() {
               <span className="relative inline-flex rounded-full size-3.5 bg-emerald-600 border-2 border-white"></span>
             </span>
           </div>
-          <div>
+          <div className="hidden sm:block">
             <span className="text-xl font-black tracking-tight block south-indian-gradient-text">
               {siteConfig.name}
             </span>
             <span className="text-[10px] uppercase font-bold tracking-widest text-emerald-700 dark:text-emerald-400 flex items-center gap-1 -mt-0.5">
               <Leaf size={10} /> 40 Years of Traditional Tawa
+            </span>
+          </div>
+          <div className="sm:hidden">
+            <span className="text-lg font-black tracking-tight block south-indian-gradient-text">
+              {siteConfig.name}
             </span>
           </div>
         </Link>
@@ -83,6 +88,27 @@ export function Header() {
           </button>
         </nav>
 
+        {/* Mobile Nav - Horizontal Scroll */}
+        <nav aria-label="Primary navigation" className="flex items-center gap-2 overflow-x-auto pb-2 lg:hidden -mx-4 px-4">
+          {navLinks.map((l) => (
+            <Link
+              key={l.href}
+              href={l.href}
+              onClick={() => setOpen(false)}
+              className="whitespace-nowrap shrink-0 rounded-full px-3.5 py-2 text-xs font-extrabold text-muted-foreground transition-all hover:bg-amber-500/10 hover:text-amber-600 dark:hover:text-amber-400"
+            >
+              {l.label}
+            </Link>
+          ))}
+          <Link
+            href="/book"
+            onClick={() => setOpen(false)}
+            className="whitespace-nowrap shrink-0 rounded-full gold-gradient-bg px-5 py-2.5 text-xs font-black text-white shadow-md shadow-amber-500/20 transition hover:opacity-95 hover:scale-105 active:scale-95"
+          >
+            Book a Table
+          </Link>
+        </nav>
+
         {/* Mobile controls */}
         <div className="flex items-center gap-2 lg:hidden">
           <Link
@@ -98,75 +124,8 @@ export function Header() {
           >
             {dark ? <Sun size={16} className="text-amber-400" /> : <Moon size={16} />}
           </button>
-          <button
-            aria-expanded={open}
-            aria-controls="mobile-navigation"
-            aria-label={open ? 'Close navigation' : 'Open navigation'}
-            onClick={() => setOpen(!open)}
-            className="grid size-10 place-items-center rounded-2xl gold-gradient-bg text-white shadow-md shadow-amber-500/20"
-          >
-            {open ? <X size={20} /> : <Menu size={20} />}
-          </button>
         </div>
       </div>
-
-      {/* Mobile Drawer */}
-      {open && (
-        <div className="fixed inset-0 z-50 lg:hidden">
-          <div className="absolute inset-0 bg-black/60 backdrop-blur-md" onClick={() => setOpen(false)} />
-          <nav
-            id="mobile-navigation"
-            aria-label="Mobile navigation"
-            className="absolute right-0 top-0 h-full w-[85%] max-w-sm border-l border-amber-500/20 bg-background shadow-2xl flex flex-col justify-between"
-          >
-            <div>
-              <div className="flex items-center justify-between border-b border-border px-5 py-5">
-                <div>
-                  <span className="text-lg font-black south-indian-gradient-text">{siteConfig.name}</span>
-                  <p className="text-[10px] font-bold text-emerald-600">🙏 Vanakkam & Welcome!</p>
-                </div>
-                <button
-                  aria-label="Close navigation"
-                  onClick={() => setOpen(false)}
-                  className="grid size-9 place-items-center rounded-full bg-amber-500 text-white"
-                >
-                  <X size={18} />
-                </button>
-              </div>
-
-              <div className="flex flex-col gap-1 px-4 py-6">
-                {navLinks.map((l) => (
-                  <Link
-                    onClick={() => setOpen(false)}
-                    key={l.href}
-                    href={l.href}
-                    className="rounded-xl px-4 py-3 text-base font-bold transition hover:bg-amber-500/10 hover:text-amber-600"
-                  >
-                    {l.label}
-                  </Link>
-                ))}
-              </div>
-            </div>
-
-            <div className="p-5 border-t border-border flex flex-col gap-3">
-              <Link
-                onClick={() => setOpen(false)}
-                href="/book"
-                className="rounded-2xl gold-gradient-bg px-4 py-3.5 text-center text-base font-bold text-white shadow-md shadow-amber-500/20"
-              >
-                Book a Table
-              </Link>
-              <Link
-                onClick={() => setOpen(false)}
-                href="/admin/login"
-                className="inline-flex items-center justify-center gap-2 rounded-2xl border border-amber-500/40 bg-amber-500/10 px-4 py-3 text-base font-bold text-amber-600 dark:text-amber-400"
-              >
-                <Shield size={18} /> Admin Portal
-              </Link>
-            </div>
-          </nav>
-        </div>
-      )}
     </header>
   )
 }
