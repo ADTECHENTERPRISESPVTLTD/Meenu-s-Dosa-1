@@ -33,7 +33,8 @@ export function Header() {
   }, [])
 
   return (
-    <header className="sticky top-0 z-40 border-b border-amber-500/25 bg-background/95 backdrop-blur-md shadow-sm transition-colors">
+    <>
+    <header className="sticky top-0 z-[100] isolate border-b border-amber-500/25 bg-background/95 backdrop-blur-md shadow-sm transition-colors">
       {/* South Indian Top Announcement Bar */}
       <div className="banana-leaf-bg py-1.5 px-4 text-center text-xs font-bold text-white tracking-wide shadow-inner flex items-center justify-center gap-2">
         <Sparkles size={13} className="animate-spin text-amber-300 shrink-0 hidden sm:inline-flex" />
@@ -100,68 +101,6 @@ export function Header() {
           </button>
         </nav>
 
-        {/* Mobile Nav - Slide-out Drawer from Right (Full height, all items visible) */}
-        {open && (
-          <>
-            <div
-              className="fixed inset-0 z-[55] bg-black/60 backdrop-blur-sm lg:hidden"
-              onClick={() => setOpen(false)}
-              aria-hidden="true"
-            />
-            <nav
-              id="mobile-navigation"
-              aria-label="Mobile navigation"
-              className="fixed inset-y-0 right-0 z-[60] flex w-[min(92vw,26rem)] flex-col border-l border-amber-500/20 bg-background shadow-2xl lg:hidden"
-            >
-            <div className="flex items-center justify-between border-b border-border px-4 py-3">
-              <div>
-                <span className="text-lg font-black south-indian-gradient-text">{siteConfig.name}</span>
-                <p className="text-[10px] font-bold text-emerald-600">🙏 Vanakkam & Welcome!</p>
-              </div>
-              <button
-                aria-label="Close navigation"
-                onClick={() => setOpen(false)}
-                className="grid size-8 place-items-center rounded-full bg-amber-500 text-white"
-              >
-                <X size={16} />
-              </button>
-            </div>
-
-            <div className="flex flex-1 flex-col justify-between px-3 py-3 overflow-hidden">
-              <div className="flex flex-col gap-0.5">
-                {navLinks.map((l) => (
-                  <Link
-                    onClick={() => setOpen(false)}
-                    key={l.href}
-                    href={l.href}
-                    className="rounded-lg px-3 py-2 text-sm font-bold transition hover:bg-amber-500/10 hover:text-amber-600"
-                  >
-                    {l.label}
-                  </Link>
-                ))}
-              </div>
-
-              <div className="border-t border-border pt-3 flex flex-col gap-1.5">
-                <Link
-                  onClick={() => setOpen(false)}
-                  href="/book"
-                  className="rounded-xl gold-gradient-bg px-3 py-2.5 text-center text-sm font-bold text-white shadow-md shadow-amber-500/20"
-                >
-                  Book a Table
-                </Link>
-                <Link
-                  onClick={() => setOpen(false)}
-                  href="/admin/login"
-                  className="inline-flex items-center justify-center gap-2 rounded-xl border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-sm font-bold text-amber-600 dark:text-amber-400"
-                >
-                  <Shield size={14} /> Admin Portal
-                </Link>
-              </div>
-            </div>
-            </nav>
-          </>
-        )}
-
         {/* Mobile controls */}
         <div className="flex items-center gap-2 lg:hidden">
           <Link
@@ -189,6 +128,67 @@ export function Header() {
         </div>
       </div>
     </header>
+    {open && (
+      <>
+        <div
+          className="fixed inset-0 z-[110] bg-black/60 backdrop-blur-sm lg:hidden"
+          onClick={() => setOpen(false)}
+          aria-hidden="true"
+        />
+        <nav
+          id="mobile-navigation"
+          aria-label="Mobile navigation"
+          className="fixed inset-y-0 right-0 z-[120] flex w-[min(92vw,26rem)] flex-col border-l border-amber-500/20 bg-background shadow-2xl lg:hidden"
+        >
+          <div className="flex items-center justify-between border-b border-border px-4 py-3">
+            <div>
+              <span className="text-lg font-black south-indian-gradient-text">{content.name}</span>
+              <p className="text-[10px] font-bold text-emerald-600">🙏 Vanakkam & Welcome!</p>
+            </div>
+            <button
+              aria-label="Close navigation"
+              onClick={() => setOpen(false)}
+              className="grid size-8 place-items-center rounded-full bg-amber-500 text-white"
+            >
+              <X size={16} />
+            </button>
+          </div>
+
+          <div className="flex flex-1 flex-col justify-between px-3 py-3 overflow-hidden">
+            <div className="flex flex-col gap-0.5">
+              {navLinks.map((l) => (
+                <Link
+                  onClick={() => setOpen(false)}
+                  key={l.href}
+                  href={l.href}
+                  className="rounded-lg px-3 py-2 text-sm font-bold transition hover:bg-amber-500/10 hover:text-amber-600"
+                >
+                  {l.label}
+                </Link>
+              ))}
+            </div>
+
+            <div className="border-t border-border pt-3 flex flex-col gap-1.5">
+              <Link
+                onClick={() => setOpen(false)}
+                href="/book"
+                className="rounded-xl gold-gradient-bg px-3 py-2.5 text-center text-sm font-bold text-white shadow-md shadow-amber-500/20"
+              >
+                Book a Table
+              </Link>
+              <Link
+                onClick={() => setOpen(false)}
+                href="/admin/login"
+                className="inline-flex items-center justify-center gap-2 rounded-xl border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-sm font-bold text-amber-600 dark:text-amber-400"
+              >
+                <Shield size={14} /> Admin Portal
+              </Link>
+            </div>
+          </div>
+        </nav>
+      </>
+    )}
+    </>
   )
 }
 
